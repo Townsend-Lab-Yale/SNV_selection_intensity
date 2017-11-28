@@ -175,17 +175,19 @@ $(document).ready(function () {
 
 
 <!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-text-begin -->
 <p>This <a href="http://rmarkdown.rstudio.com">R Markdown</a> Notebook, output as a <code>github_document</code>, describes the process by which we estimate the selection intensity for single nucleotide variants (SNVs) in whole-exome sequencing data.</p>
 <p>Here, as an example, we estimate the selection intensity of SNVs in lung adenocarcinoma (LUAD) data.</p>
 <div id="import-and-preprocess-the-data" class="section level1">
 <h1>Import and preprocess the data</h1>
 <p>The data for this pipeline needs to be in <a href="https://wiki.nci.nih.gov/display/TCGA/Mutation+Annotation+Format+(MAF)+Specification">MAF format</a>, hg19 coordinates, and have the following headers:</p>
-<div id="import-nci-data-and-non-nci-data" class="section level2">
-<h2>Import NCI data and non-NCI data</h2>
-<p>Obtain the NCI data from <a href="https://portal.gdc.cancer.gov/" class="uri">https://portal.gdc.cancer.gov/</a> and store it within the <code>input_data</code> folder.</p>
+<div id="import-the-nci-data-and-the-non-nci-data" class="section level2">
+<h2>Import the NCI data and the non-NCI data</h2>
+<p>Obtain the NCI data from <a href="https://portal.gdc.cancer.gov/" class="uri">https://portal.gdc.cancer.gov/</a> and store it within the <code>input_data/</code> folder. The <code>YG.data</code> dataset may be found along with Cannataro <em>et al.</em> (2017)<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a></p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBpbXBvcnQgdGhlIExVQUQgZGF0YSBmcm9tIE5DSSBcbiMgVVVJRDogODFjY2FlZjMtNDU1MC00OTRkLTg4MmMtODk1ZmI1YTNkZTNiXG5OQ0kuZGF0YS4zOCA8LSByZWFkLmNzdihmaWxlID0gXCJpbnB1dF9kYXRhL1RDR0EuTFVBRC5tdXRlY3QuODFjY2FlZjMtNDU1MC00OTRkLTg4MmMtODk1ZmI1YTNkZTNiLkRSLTcuMC5zb21hdGljLm1hZlwiLFxuICAgICAgICAgICAgICAgICAgICAgICAgaGVhZGVyID0gVCxcbiAgICAgICAgICAgICAgICAgICAgICAgIHNraXAgPSA1LFxuICAgICAgICAgICAgICAgICAgICAgICAgc2VwID0gXCJcXHRcIixcbiAgICAgICAgICAgICAgICAgICAgICAgIHN0cmluZ3NBc0ZhY3RvcnMgPSBGKVxuXG4jIGltcG9ydCBkYXRhIGZyb20gYSBub24tTkNJIHNvdXJjZVxuWUcuZGF0YSA8LSByZWFkLmNzdihmaWxlID0gXCJpbnB1dF9kYXRhL2FkY19pbmNfY291bnRzLnR4dFwiLFxuICAgICAgICAgICAgICAgICAgICBoZWFkZXIgPSBULFxuICAgICAgICAgICAgICAgICAgICBzZXAgPSBcIlxcdFwiLFxuICAgICAgICAgICAgICAgICAgICBzdHJpbmdzQXNGYWN0b3JzID0gRilcbmBgYCJ9 -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBpbXBvcnQgdGhlIExVQUQgZGF0YSBmcm9tIE5DSSBcbiMgVVVJRDogODFjY2FlZjMtNDU1MC00OTRkLTg4MmMtODk1ZmI1YTNkZTNiXG5OQ0kuZGF0YS4zOCA8LSByZWFkLmNzdihmaWxlID0gXCJpbnB1dF9kYXRhL1RDR0EuTFVBRC5tdXRlY3QuODFjY2FlZjMtNDU1MC00OTRkLTg4MmMtODk1ZmI1YTNkZTNiLkRSLTcuMC5zb21hdGljLm1hZlwiLFxuICAgICAgICAgICAgICAgICAgICAgICAgaGVhZGVyID0gVCxcbiAgICAgICAgICAgICAgICAgICAgICAgIHNraXAgPSA1LFxuICAgICAgICAgICAgICAgICAgICAgICAgc2VwID0gXCJcXHRcIixcbiAgICAgICAgICAgICAgICAgICAgICAgIHN0cmluZ3NBc0ZhY3RvcnMgPSBGKVxuIyBpbXBvcnQgZGF0YSBmcm9tIGEgbm9uLU5DSSBzb3VyY2VcbllHLmRhdGEgPC0gcmVhZC5jc3YoZmlsZSA9IFwiaW5wdXRfZGF0YS9hZGNfaW5jX2NvdW50cy50eHRcIixcbiAgICAgICAgICAgICAgICAgICAgaGVhZGVyID0gVCxcbiAgICAgICAgICAgICAgICAgICAgc2VwID0gXCJcXHRcIixcbiAgICAgICAgICAgICAgICAgICAgc3RyaW5nc0FzRmFjdG9ycyA9IEYpXG5gYGAifQ== -->
 <pre class="r"><code># import the LUAD data from NCI 
 # UUID: 81ccaef3-4550-494d-882c-895fb5a3de3b
 NCI.data.38 &lt;- read.csv(file = &quot;input_data/TCGA.LUAD.mutect.81ccaef3-4550-494d-882c-895fb5a3de3b.DR-7.0.somatic.maf&quot;,
@@ -193,7 +195,6 @@ NCI.data.38 &lt;- read.csv(file = &quot;input_data/TCGA.LUAD.mutect.81ccaef3-455
                         skip = 5,
                         sep = &quot;\t&quot;,
                         stringsAsFactors = F)
-
 # import data from a non-NCI source
 YG.data &lt;- read.csv(file = &quot;input_data/adc_inc_counts.txt&quot;,
                     header = T,
@@ -202,11 +203,36 @@ YG.data &lt;- read.csv(file = &quot;input_data/adc_inc_counts.txt&quot;,
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
+</div>
+<div id="preprocess-the-data" class="section level2">
+<h2>Preprocess the data</h2>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxucmVxdWlyZShydHJhY2tsYXllcilcbiMgVGhpcyBkb3dubG9hZHMgdGhlIGZpbGUgaGczOFRvSGcxOS5vdmVyLmNoYWluLmd6IGZyb20gXG4jIGh0dHA6Ly9oZ2Rvd25sb2FkLmNzZS51Y3NjLmVkdS9nYmRiL2hnMzgvbGlmdE92ZXIvIFxuIyBhbmQgdGhlbiBsb2FkcyBpbiBhIGZ1bmN0aW9uIHRoYXQgZG9lcyB0aGUgY29udmVydGluZ1xuc291cmNlKFwiUi9oZzM5X3RvX2hnMTlfY29udmVydGVyLlJcIikgXG5zb3VyY2UoXCJSL3VuaXF1ZV90dW1vcl9hZGRpdGlvbi5SXCIpICMgQWRkcyB0dW1vciBuYW1lIHRvIGRhdGFmcmFtZVxuc291cmNlKFwiUi9mbGlwX2Z1bmN0aW9uLlJcIikgIyBGaW5kcyBudWNsZW90aWRlIGNvbXBsZW1lbnRcbnNvdXJjZShcIlIvRE5QX3JlbW92ZXIuUlwiKSAjIHJlbW92ZXMgcG9zc2libGUgRE5QLCBhbmQgcmVjdXJyZW50IChub24tcHJpbWFyeSkgdHVtb3JzIGZyb20gVENHQSBkYXRhXG5zb3VyY2UoXCJSL3R1bW9yX2FsbGVsZV9hZGRlci5SXCIpICMgYWRkcyBjb2x1bW4gd2l0aCB0aGUgdHVtb3IgYWxsZWxlXG5OQ0kuZGF0YS4xOSA8LSBoZzM4LnRvLmhnMTkuY29udmVydGVyKGNoYWluPSdpbnB1dF9kYXRhL2hnMzhUb2hnMTkuY2hhaW4nLGhnMzhfbWFmPU5DSS5kYXRhLjM4KVxuYGBgIn0= -->
+<pre class="r"><code>require(rtracklayer)
+# This downloads the file hg38ToHg19.over.chain.gz from 
+# http://hgdownload.cse.ucsc.edu/gbdb/hg38/liftOver/ 
+# and then loads in a function that does the converting
+source(&quot;R/hg39_to_hg19_converter.R&quot;) 
+source(&quot;R/unique_tumor_addition.R&quot;) # Adds tumor name to dataframe
+source(&quot;R/flip_function.R&quot;) # Finds nucleotide complement
+source(&quot;R/DNP_remover.R&quot;) # removes possible DNP, and recurrent (non-primary) tumors from TCGA data
+source(&quot;R/tumor_allele_adder.R&quot;) # adds column with the tumor allele
+NCI.data.19 &lt;- hg38.to.hg19.converter(chain='input_data/hg38Tohg19.chain',hg38_maf=NCI.data.38)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 </div>
 </div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Cannataro, V. L., Gaffney, S. G., Stender, C., Zhao, Z., Philips, M., Greenstein, A. E., Townsend, J. P. (2017) “Heterogeneity and mutation in KRAS and associated oncogenes: evaluating the potential for the evolution of resistance to targeting of KRAS G12C” Oncogene, in press<a href="#fnref1">↩</a></p></li>
+</ol>
+</div>
 
-<div id="rmd-source-code">LS0tCnRpdGxlOiAiU05WIHNlbGVjdGlvbiBpbnRlbnNpdHkiCmF1dGhvcjogIlZpbmNlbnQgTC4gQ2FubmF0YXJvIgpvdXRwdXQ6CiAgaHRtbF9ub3RlYm9vazogZGVmYXVsdAogIGdpdGh1Yl9kb2N1bWVudDogZGVmYXVsdAotLS0KClRoaXMgW1IgTWFya2Rvd25dKGh0dHA6Ly9ybWFya2Rvd24ucnN0dWRpby5jb20pIE5vdGVib29rLCBvdXRwdXQgYXMgYSBgZ2l0aHViX2RvY3VtZW50YCwgZGVzY3JpYmVzIHRoZSBwcm9jZXNzIGJ5IHdoaWNoIHdlIGVzdGltYXRlIHRoZSBzZWxlY3Rpb24gaW50ZW5zaXR5IGZvciBzaW5nbGUgbnVjbGVvdGlkZSB2YXJpYW50cyAoU05WcykgaW4gd2hvbGUtZXhvbWUgc2VxdWVuY2luZyBkYXRhLiAgCgpIZXJlLCBhcyBhbiBleGFtcGxlLCB3ZSBlc3RpbWF0ZSB0aGUgc2VsZWN0aW9uIGludGVuc2l0eSBvZiBTTlZzIGluIGx1bmcgYWRlbm9jYXJjaW5vbWEgKExVQUQpIGRhdGEuIAoKIyBJbXBvcnQgYW5kIHByZXByb2Nlc3MgdGhlIGRhdGEKClRoZSBkYXRhIGZvciB0aGlzIHBpcGVsaW5lIG5lZWRzIHRvIGJlIGluIFtNQUYgZm9ybWF0XShodHRwczovL3dpa2kubmNpLm5paC5nb3YvZGlzcGxheS9UQ0dBL011dGF0aW9uK0Fubm90YXRpb24rRm9ybWF0KyhNQUYpK1NwZWNpZmljYXRpb24pLCBoZzE5IGNvb3JkaW5hdGVzLCBhbmQgaGF2ZSB0aGUgZm9sbG93aW5nIGhlYWRlcnM6IAoKIyMgSW1wb3J0IE5DSSBkYXRhIGFuZCBub24tTkNJIGRhdGEKCk9idGFpbiB0aGUgTkNJIGRhdGEgZnJvbSA8aHR0cHM6Ly9wb3J0YWwuZ2RjLmNhbmNlci5nb3YvPiBhbmQgc3RvcmUgaXQgd2l0aGluIHRoZSBgaW5wdXRfZGF0YWAgZm9sZGVyLgoKYGBge3IgaW1wb3J0IHRoZSBkYXRhfQojIGltcG9ydCB0aGUgTFVBRCBkYXRhIGZyb20gTkNJIAojIFVVSUQ6IDgxY2NhZWYzLTQ1NTAtNDk0ZC04ODJjLTg5NWZiNWEzZGUzYgpOQ0kuZGF0YS4zOCA8LSByZWFkLmNzdihmaWxlID0gImlucHV0X2RhdGEvVENHQS5MVUFELm11dGVjdC44MWNjYWVmMy00NTUwLTQ5NGQtODgyYy04OTVmYjVhM2RlM2IuRFItNy4wLnNvbWF0aWMubWFmIiwKICAgICAgICAgICAgICAgICAgICAgICAgaGVhZGVyID0gVCwKICAgICAgICAgICAgICAgICAgICAgICAgc2tpcCA9IDUsCiAgICAgICAgICAgICAgICAgICAgICAgIHNlcCA9ICJcdCIsCiAgICAgICAgICAgICAgICAgICAgICAgIHN0cmluZ3NBc0ZhY3RvcnMgPSBGKQoKIyBpbXBvcnQgZGF0YSBmcm9tIGEgbm9uLU5DSSBzb3VyY2UKWUcuZGF0YSA8LSByZWFkLmNzdihmaWxlID0gImlucHV0X2RhdGEvYWRjX2luY19jb3VudHMudHh0IiwKICAgICAgICAgICAgICAgICAgICBoZWFkZXIgPSBULAogICAgICAgICAgICAgICAgICAgIHNlcCA9ICJcdCIsCiAgICAgICAgICAgICAgICAgICAgc3RyaW5nc0FzRmFjdG9ycyA9IEYpCmBgYAoKCgoKCg==</div>
+<div id="rmd-source-code">LS0tCnRpdGxlOiAiU05WIHNlbGVjdGlvbiBpbnRlbnNpdHkiCmF1dGhvcjogIlZpbmNlbnQgTC4gQ2FubmF0YXJvIgpvdXRwdXQ6CiAgZ2l0aHViX2RvY3VtZW50OiBkZWZhdWx0CiAgaHRtbF9ub3RlYm9vazogZGVmYXVsdAotLS0KCmBgYHtyIHNldHVwLCBpbmNsdWRlPUZBTFNFfQpyZXF1aXJlKHJ0cmFja2xheWVyKQpgYGAKCgpUaGlzIFtSIE1hcmtkb3duXShodHRwOi8vcm1hcmtkb3duLnJzdHVkaW8uY29tKSBOb3RlYm9vaywgb3V0cHV0IGFzIGEgYGdpdGh1Yl9kb2N1bWVudGAsIGRlc2NyaWJlcyB0aGUgcHJvY2VzcyBieSB3aGljaCB3ZSBlc3RpbWF0ZSB0aGUgc2VsZWN0aW9uIGludGVuc2l0eSBmb3Igc2luZ2xlIG51Y2xlb3RpZGUgdmFyaWFudHMgKFNOVnMpIGluIHdob2xlLWV4b21lIHNlcXVlbmNpbmcgZGF0YS4gIAoKSGVyZSwgYXMgYW4gZXhhbXBsZSwgd2UgZXN0aW1hdGUgdGhlIHNlbGVjdGlvbiBpbnRlbnNpdHkgb2YgU05WcyBpbiBsdW5nIGFkZW5vY2FyY2lub21hIChMVUFEKSBkYXRhLiAKCiMgSW1wb3J0IGFuZCBwcmVwcm9jZXNzIHRoZSBkYXRhCgpUaGUgZGF0YSBmb3IgdGhpcyBwaXBlbGluZSBuZWVkcyB0byBiZSBpbiBbTUFGIGZvcm1hdF0oaHR0cHM6Ly93aWtpLm5jaS5uaWguZ292L2Rpc3BsYXkvVENHQS9NdXRhdGlvbitBbm5vdGF0aW9uK0Zvcm1hdCsoTUFGKStTcGVjaWZpY2F0aW9uKSwgaGcxOSBjb29yZGluYXRlcywgYW5kIGhhdmUgdGhlIGZvbGxvd2luZyBoZWFkZXJzOiAKCiMjIEltcG9ydCB0aGUgTkNJIGRhdGEgYW5kIHRoZSBub24tTkNJIGRhdGEKCk9idGFpbiB0aGUgTkNJIGRhdGEgZnJvbSA8aHR0cHM6Ly9wb3J0YWwuZ2RjLmNhbmNlci5nb3YvPiBhbmQgc3RvcmUgaXQgd2l0aGluIHRoZSBgaW5wdXRfZGF0YS9gIGZvbGRlci4gVGhlIGBZRy5kYXRhYCBkYXRhc2V0IG1heSBiZSBmb3VuZCBhbG9uZyB3aXRoIENhbm5hdGFybyAqZXQgYWwuKiAoMjAxNylbXjFdCgpbXjFdOiBDYW5uYXRhcm8sIFYuIEwuLCBHYWZmbmV5LCBTLiBHLiwgU3RlbmRlciwgQy4sIFpoYW8sIFouLCBQaGlsaXBzLCBNLiwgR3JlZW5zdGVpbiwgQS4gRS4sIFRvd25zZW5kLCBKLiBQLiAoMjAxNykg4oCcSGV0ZXJvZ2VuZWl0eSBhbmQgbXV0YXRpb24gaW4gS1JBUyBhbmQgYXNzb2NpYXRlZCBvbmNvZ2VuZXM6IGV2YWx1YXRpbmcgdGhlIHBvdGVudGlhbCBmb3IgdGhlIGV2b2x1dGlvbiBvZiByZXNpc3RhbmNlIHRvIHRhcmdldGluZyBvZiBLUkFTIEcxMkMiIE9uY29nZW5lLCBpbiBwcmVzcwoKYGBge3IgaW1wb3J0IHRoZSBkYXRhfQojIGltcG9ydCB0aGUgTFVBRCBkYXRhIGZyb20gTkNJIAojIFVVSUQ6IDgxY2NhZWYzLTQ1NTAtNDk0ZC04ODJjLTg5NWZiNWEzZGUzYgpOQ0kuZGF0YS4zOCA8LSByZWFkLmNzdihmaWxlID0gImlucHV0X2RhdGEvVENHQS5MVUFELm11dGVjdC44MWNjYWVmMy00NTUwLTQ5NGQtODgyYy04OTVmYjVhM2RlM2IuRFItNy4wLnNvbWF0aWMubWFmIiwKICAgICAgICAgICAgICAgICAgICAgICAgaGVhZGVyID0gVCwKICAgICAgICAgICAgICAgICAgICAgICAgc2tpcCA9IDUsCiAgICAgICAgICAgICAgICAgICAgICAgIHNlcCA9ICJcdCIsCiAgICAgICAgICAgICAgICAgICAgICAgIHN0cmluZ3NBc0ZhY3RvcnMgPSBGKQoKIyBpbXBvcnQgZGF0YSBmcm9tIGEgbm9uLU5DSSBzb3VyY2UKWUcuZGF0YSA8LSByZWFkLmNzdihmaWxlID0gImlucHV0X2RhdGEvYWRjX2luY19jb3VudHMudHh0IiwKICAgICAgICAgICAgICAgICAgICBoZWFkZXIgPSBULAogICAgICAgICAgICAgICAgICAgIHNlcCA9ICJcdCIsCiAgICAgICAgICAgICAgICAgICAgc3RyaW5nc0FzRmFjdG9ycyA9IEYpCmBgYAoKIyMgUHJlcHJvY2VzcyB0aGUgZGF0YQoKYGBge3IgcHJlcHJvY2Vzc30KIyMgRmlyc3QsIG5lZWQgdG8gc291cmNlIGZ1bmN0aW9ucwoKIyBUaGlzIGRvd25sb2FkcyBhbmQgdW56aXBzIHRoZSBmaWxlIGhnMzhUb0hnMTkub3Zlci5jaGFpbi5neiBmcm9tIAojIGh0dHA6Ly9oZ2Rvd25sb2FkLmNzZS51Y3NjLmVkdS9nYmRiL2hnMzgvbGlmdE92ZXIvICAoaWYgaXQgaXMgbm90IGFscmVhZHkgdGhlcmUpCiMgYW5kIHRoZW4gbG9hZHMgaW4gYSBmdW5jdGlvbiB0aGF0IGRvZXMgdGhlIGNvbnZlcnRpbmcKc291cmNlKCJSL2hnMzlfdG9faGcxOV9jb252ZXJ0ZXIuUiIpIAoKc291cmNlKCJSL3VuaXF1ZV90dW1vcl9hZGRpdGlvbi5SIikgIyBBZGRzIHR1bW9yIG5hbWUgdG8gZGF0YWZyYW1lCnNvdXJjZSgiUi9mbGlwX2Z1bmN0aW9uLlIiKSAjIEZpbmRzIG51Y2xlb3RpZGUgY29tcGxlbWVudApzb3VyY2UoIlIvRE5QX3JlbW92ZXIuUiIpICMgcmVtb3ZlcyBwb3NzaWJsZSBETlAsIGFuZCByZWN1cnJlbnQgKG5vbi1wcmltYXJ5KSB0dW1vcnMgZnJvbSBUQ0dBIGRhdGEKc291cmNlKCJSL3R1bW9yX2FsbGVsZV9hZGRlci5SIikgIyBhZGRzIGNvbHVtbiB3aXRoIHRoZSB0dW1vciBhbGxlbGUKCiMjIFRoZW4sIHVzZSBmdW5jdGlvbnMuIApOQ0kuZGF0YS4xOSA8LSBoZzM4LnRvLmhnMTkuY29udmVydGVyKGNoYWluPSdpbnB1dF9kYXRhL2hnMzhUb2hnMTkuY2hhaW4nLGhnMzhfbWFmPU5DSS5kYXRhLjM4KQpOQ0kuZGF0YS4xOSA8LSBETlAucmVtb3ZlcihNQUYgPSBOQ0kuZGF0YS4xOSkKTkNJLmRhdGEuMTkkVHVtb3JfU2VxX0FsbGVsZTIgPC0gdG91cHBlcihOQ0kuZGF0YS4xOSRUdW1vcl9TZXFfQWxsZWxlMikKTkNJLmRhdGEuMTkkUmVmZXJlbmNlX0FsbGVsZSA8LSB0b3VwcGVyKE5DSS5kYXRhLjE5JFJlZmVyZW5jZV9BbGxlbGUpCk5DSS5kYXRhLjE5IDwtIHR1bW9yLmFsbGVsZS5hZGRlcihNQUYgPSBOQ0kuZGF0YS4xOSkKCmBgYAoKCgoKCg==</div>
 
 
 
