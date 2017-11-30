@@ -4,4 +4,8 @@
 .Ruserdata
 input_data/TCGA*
 input_data/adc_inc_counts.txt
+R/_*.R
+output_data/
+input_data/YG*
+MutSigCV/*
 

@@ -2,16 +2,23 @@
 title: "SNV selection intensity"
 author: "Vincent L. Cannataro"
 output:
-  github_document: default
-  html_notebook: default
+  github_document:
+    toc: true
 ---
 
 ```{r setup, include=FALSE}
 require(rtracklayer)
+require(ggplot2)
+require(reshape2)
+require(BiocInstaller)
+require(BSgenome)
+require(BSgenome.Hsapiens.UCSC.hg19)
+
+tumor.name <- "LUAD"
 ```
 
 
-This [R Markdown](http://rmarkdown.rstudio.com) Notebook, output as a `github_document`, describes the process by which we estimate the selection intensity for single nucleotide variants (SNVs) in whole-exome sequencing data.  
+This document describes our pipeline to estimate the selection intensity for single nucleotide variants (SNVs) in whole-exome sequencing data.  
 
 Here, as an example, we estimate the selection intensity of SNVs in lung adenocarcinoma (LUAD) data. 
 
@@ -19,7 +26,13 @@ Here, as an example, we estimate the selection intensity of SNVs in lung adenoca
 
 The data for this pipeline needs to be in [MAF format](https://wiki.nci.nih.gov/display/TCGA/Mutation+Annotation+Format+(MAF)+Specification), hg19 coordinates, and have the following headers: 
 
-## Import the NCI data and the non-NCI data
+* Hugo_Symbol
+* Chromosome
+* Start_Position
+* Variant_Type
+* Tumor_Sample_Barcode
+
+## Import the NCI data and any non-NCI data
 
 Obtain the NCI data from <https://portal.gdc.cancer.gov/> and store it within the `input_data/` folder. The `YG.data` dataset may be found along with Cannataro *et al.* (2017)[^1]
 
@@ -35,7 +48,7 @@ NCI.data.38 <- read.csv(file = "input_data/TCGA.LUAD.mutect.81ccaef3-4550-494d-8
                         stringsAsFactors = F)
 
 # import data from a non-NCI source
-YG.data <- read.csv(file = "input_data/adc_inc_counts.txt",
+YG.data <- read.csv(file = "input_data/YG_LUAD_data.txt",
                     header = T,
                     sep = "\t",
                     stringsAsFactors = F)
@@ -43,8 +56,10 @@ YG.data <- read.csv(file = "input_data/adc_inc_counts.txt",
 
 ## Preprocess the data
 
+Convert the NCI dataset to hg19 coordinates so that the coordinates work with `MutSigCV`. Then, add the unique tumor names based off of `Tumor_Sample_Barcode`, remove possible DNP mistakenly reported as SNP, and add a column to the dataframe that has the "tumor" allele. 
+
 ```{r preprocess}
-## First, need to source functions
+# First, need to source functions
 
 # This downloads and unzips the file hg38ToHg19.over.chain.gz from 
 # http://hgdownload.cse.ucsc.edu/gbdb/hg38/liftOver/  (if it is not already there)
@@ -56,12 +71,138 @@ source("R/flip_function.R") # Finds nucleotide complement
 source("R/DNP_remover.R") # removes possible DNP, and recurrent (non-primary) tumors from TCGA data
 source("R/tumor_allele_adder.R") # adds column with the tumor allele
 
-## Then, use functions. 
+## Then, use the functions. 
 NCI.data.19 <- hg38.to.hg19.converter(chain='input_data/hg38Tohg19.chain',hg38_maf=NCI.data.38)
 NCI.data.19 <- DNP.remover(MAF = NCI.data.19)
 NCI.data.19$Tumor_Seq_Allele2 <- toupper(NCI.data.19$Tumor_Seq_Allele2)
 NCI.data.19$Reference_Allele <- toupper(NCI.data.19$Reference_Allele)
 NCI.data.19 <- tumor.allele.adder(MAF = NCI.data.19)
+
+#Save the NCI dataframe 
+save(NCI.data.19, file = "output_data/NCI_data_LUAD.RData")
+
+
+```
+
+If necessary, combine the NCI data with any other dataset along common headers, add custom headers again.
+
+```{r combine datasets}
+source("R/merging_NCI_and_local_MAF_files.R")
+
+
+MAF_for_analysis <- merging_TCGA_and_local_MAFdata_function(NCI_data = NCI.data.19,
+                                                            Local_data = YG.data)
+
+MAF_for_analysis <- unique.tumor.addition.function(MAF.file = MAF_for_analysis,non.TCGA.characters.to.keep = 'all',figures=F)
+MAF_for_analysis <- DNP.remover(MAF = MAF_for_analysis)
+MAF_for_analysis$Tumor_Seq_Allele2 <- toupper(MAF_for_analysis$Tumor_Seq_Allele2)
+MAF_for_analysis$Reference_Allele <- toupper(MAF_for_analysis$Reference_Allele)
+MAF_for_analysis <- tumor.allele.adder(MAF = MAF_for_analysis)
+
+save(MAF_for_analysis, file = "output_data/MAF_for_analysis_LUAD.RData")
+
+```
+
+Match the gene names in the `Hugo_Symbol` column in the MAF file and `geneName` column in the isoform file with gene names in the `MutSigCV` covariates file. The isoform file was downloaded from the [genome.ucsc.edu](https://genome.ucsc.edu/cgi-bin/hgTables) table browser, specifying `group: Genes and Gene Predictions`, `track: RefSeq Genes`, and `table: refFlat` in the human hg19 genome. Gene expression data are median values from lung data sets in `The Cancer Cell Line Encyclopedia`[^2] matched to the genes and data in the [MutSigCV covariate input file](http://software.broadinstitute.org/cancer/software/genepattern/modules/docs/MutSigCV) and saved as `input_data/LUNG_expression.txt`.
+
+[^2]:Barretina, Jordi, Giordano Caponigro, Nicolas Stransky, Kavitha Venkatesan, Adam A. Margolin,
+Sungjoon Kim, Christopher J. Wilson, et al. 2012. “The Cancer Cell Line Encyclopedia Enables
+Predictive Modelling of Anticancer Drug Sensitivity.” Nature 483 (7391): 603–7. 
+
+```{r synonym matcher}
+
+source("R/synonym_matcher.R")
+
+MAF_for_analysis <- synonym.matcher.function(input_to_be_changed = MAF_for_analysis,synonym.table = read.csv(file='input_data/matching_table.txt',stringsAsFactors = F,sep='\t'),covariates.file = read.table(file='input_data/LUNG_expression.txt',sep='\t',header = T,stringsAsFactors = F),isoforms_or_MAF = 'MAF')
+
+isoforms <- synonym.matcher.function(input_to_be_changed = read.csv(file='input_data/UCSC_RefSeqGenes_refFlat.txt',header = T,sep='\t',stringsAsFactors = F),synonym.table = read.csv(file='input_data/matching_table.txt',stringsAsFactors = F,sep='\t'),covariates.file = read.table(file='input_data/LUNG_expression.txt',sep='\t',header = T,stringsAsFactors = F),isoforms_or_MAF = 'isoforms')
+
+save(MAF_for_analysis,file='output_data/MAF_for_analysis_LUAD.RData')
+write.table(MAF_for_analysis,file='output_data/MAF_for_analysis_LUAD.txt',quote = F,sep='\t',row.names = F)
+
+save(isoforms,file='output_data/Isoforms_LUAD.RData')
+
+
+```
+
+# Calculate mutation rate with MutSigCV
+
+```{r mutsig directory}
+dir.create("MutSigCV") #Download and unzip MutSigCV 1.41 here 
+```
+
+Steps to calculate mutation rates with MutSigCV:
+
+1. Agree to the MutSigCV license and download MutSigCV 1.41 from http://archive.broadinstitute.org/cancer/cga/mutsig_download. 
+2. Download MutSigCV 1.41 reference files from http://archive.broadinstitute.org/cancer/cga/mutsig_run#reference_files. Save files to the MutSigCV folder and unzip. 
+3. Add contents of input_data/to_add_MutSigCV.txt to line 953 of MutSigCV.m.
+4. Run with `input_data/LUNG_expression.txt` as the covariate file and `output_data/MAF_for_analysis_LUAD.txt` as the mutation file
+
+Outputs `*.gene_rates.txt` and `*.overall_rates.txt`, which we use to calculate mutation rate within genes
+
+# Calculate the trinucleotide mutation profile of this tissue
+
+Use the `deconstructSigs` package to calculate the average trinucleotide context among tumors with over 50 SNV (as per [^3]). 
+
+[^3]:Rosenthal, Rachel, Nicholas McGranahan, Javier Herrero, Barry S. Taylor, and Charles Swanton. 2016.
+“DeconstructSigs: Delineating Mutational Processes in Single Tumors Distinguishes DNA Repair
+Deficiencies and Patterns of Carcinoma Evolution.” Genome Biology 17 (February): 31. 
+
+```{r trinuc profile}
+
+source("R/trinucleotide_profile.R")
+
+trinuc.mutation_data <- trinuc.profile.function_withweights(input.MAF = MAF_for_analysis,save.figs=F)
+
+save(trinuc.mutation_data,file='output_data/trinuc_data_LUAD_all.RData')
+trinuc.mutation_data.df <- trinuc.mutation_data$trinuc.mutation_data
+save(trinuc.mutation_data.df,file='output_data/trinuc_data_LUAD.RData')
+
+p <- ggplot(data=trinuc.mutation_data$trinuc.mutation_data, aes(Downstream, Upstream)) +
+  geom_tile(aes(fill = proportion*100), colour = "white") + scale_fill_gradient(low = "white", high = "steelblue", name="Percent")
+p <- p + facet_grid(.~section_labels, labeller = label_parsed) 
+p <- p +  geom_text(aes(label = round(proportion, 4)*100),size=3)
+# p <- p + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+# panel.background = element_blank(), axis.line = element_line(colour = "black"))
+p <- p + theme_bw() + theme(panel.grid.major = element_blank(),
+                            panel.grid.minor = element_blank(),
+                            axis.ticks = element_blank(),
+                            strip.text=element_text(size=15),
+                            axis.title.x = element_text(size=15),
+                            axis.title.y = element_text(size=15),
+                            axis.text.x = element_text(size=12),
+                            axis.text.y=element_text(size=12),plot.title = element_text(hjust = 0.5)) 
+  # ggtitle(paste("Trinucleotide profile for ",tumor.name,sep=""))
+p
+ggsave(paste("figures/",tumor.name,"_trinuc_heatmap_noname.pdf",sep=""),height = 2.5,width = 10)
+```
+
+
+# Calculating selection intensity
+
+```{r selection intensity calculation}
+
+
+source("R/selection_intensity_calc.R")
+source("R/flip_function.R")
+source("R/lambda_calculation.R")
+
+load("output_data/trinuc_data_LUAD.RData")
+load("output_data/Isoforms_LUAD.RData")
+load("output_data/MAF_for_analysis_LUAD.RData")
+
+selection.output <- selection.intensity.calculation.function(genes_for_analysis = c("KRAS"),
+                                                                 MAF_for_analysis = MAF_for_analysis,
+                                                                 this.substitution = c("this_is_not_a_real_gene",34,"T"),
+                                                                 trinuc.mutation_data = trinuc.mutation_data.df,
+                                                                 LabReference =  isoforms,
+                                                                 translations =  read.csv(file = "input_data/translations.csv",header = T,stringsAsFactors = F),
+                                                                 mut_rates = read.csv(file="MutSigCV/MutSigCV_1.41/gene_rates.txt",header = T,stringsAsFactors = F,sep="\t"),
+                                                                 low.mut = read.csv(file="MutSigCV/MutSigCV_1.41/overall_rates.txt",header = F,stringsAsFactors = F,sep="\t"),tumor.number = length(unique(MAF_for_analysis$Unique_patient_identifier)),mutsig_siggenes = read.csv(file="MutSigCV/MutSigCV_1.41/mutsig_output/.sig_genes.txt",header = T,stringsAsFactors = F,sep="\t"))
+
+
+save(selection.output,file = "output_data/KRAS_mutation_output.RData")
+
 
 ```
 
