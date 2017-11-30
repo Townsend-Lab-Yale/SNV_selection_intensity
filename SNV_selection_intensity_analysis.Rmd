@@ -148,7 +148,7 @@ Use the `deconstructSigs` package to calculate the average trinucleotide context
 “DeconstructSigs: Delineating Mutational Processes in Single Tumors Distinguishes DNA Repair
 Deficiencies and Patterns of Carcinoma Evolution.” Genome Biology 17 (February): 31. 
 
-```{r trinuc profile}
+```{r trinuc profile, fig.width=10, fig.height=2.5}
 
 source("R/trinucleotide_profile.R")
 

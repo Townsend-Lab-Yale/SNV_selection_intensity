@@ -69,8 +69,7 @@ NCI.data.19 <- hg38.to.hg19.converter(chain='input_data/hg38Tohg19.chain',hg38_m
 
     ## Loading in specified MAF...
 
-    ## Warning in base.OK: closing unused connection 5 (input_data/
-    ## hg38Tohg19.chain)
+    ## Warning: closing unused connection 5 (input_data/hg38Tohg19.chain)
 
     ## Number of rows in the MAF that failed to convert:  11
 
