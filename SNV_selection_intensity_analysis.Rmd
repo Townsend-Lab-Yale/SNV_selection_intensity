@@ -180,7 +180,7 @@ ggsave(paste("figures/",tumor.name,"_trinuc_heatmap_noname.pdf",sep=""),height =
 
 # Calculating selection intensity
 
-```{r selection intensity calculation}
+```{r selection intensity calculation, warning=FALSE, message=FALSE}
 
 
 source("R/selection_intensity_calc.R")
@@ -191,7 +191,7 @@ load("output_data/trinuc_data_LUAD.RData")
 load("output_data/Isoforms_LUAD.RData")
 load("output_data/MAF_for_analysis_LUAD.RData")
 
-selection.output <- selection.intensity.calculation.function(genes_for_analysis = c("KRAS"),
+selection.output <- selection.intensity.calculation.function(genes_for_analysis = c("KRAS","TP53","APC","EGFR"),
                                                                  MAF_for_analysis = MAF_for_analysis,
                                                                  this.substitution = c("this_is_not_a_real_gene",34,"T"),
                                                                  trinuc.mutation_data = trinuc.mutation_data.df,
@@ -201,7 +201,7 @@ selection.output <- selection.intensity.calculation.function(genes_for_analysis 
                                                                  low.mut = read.csv(file="MutSigCV/MutSigCV_1.41/overall_rates.txt",header = F,stringsAsFactors = F,sep="\t"),tumor.number = length(unique(MAF_for_analysis$Unique_patient_identifier)),mutsig_siggenes = read.csv(file="MutSigCV/MutSigCV_1.41/mutsig_output/.sig_genes.txt",header = T,stringsAsFactors = F,sep="\t"))
 
 
-save(selection.output,file = "output_data/KRAS_mutation_output.RData")
+save(selection.output,file = "output_data/selection_intensity_output.RData")
 
 
 ```
