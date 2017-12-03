@@ -125,7 +125,7 @@ selection.intensity.calculation.function <- function(genes_for_analysis,
     
     #If the name of this gene is "Unknown", tell us! 
     if(this.gene=="Unknown"){
-      print("This gene is named UNKNOWN!")
+      message("This gene is named UNKNOWN!")
       next
     }
     
@@ -136,7 +136,7 @@ selection.intensity.calculation.function <- function(genes_for_analysis,
     
     #If there is no reference for this gene name in our LabReference file, tell us! 
     if(length(which(LabReference$geneName==this.gene))==0){
-      print(paste("There is no reference for isoforms of gene ",this.gene," !"))
+      message(paste("There is no reference for isoforms of gene ",this.gene," !"))
       next
     }
     
@@ -184,7 +184,7 @@ selection.intensity.calculation.function <- function(genes_for_analysis,
             
             #Sometimes the cds.start == the cds.end?? If so, we do not have any information on this isoform, skip it. 
             if(cds.start==cds.end){
-              print(paste("The cds.start equals the cds.end for gene: ",this.gene))
+              message(paste("The cds.start equals the cds.end for gene: ",this.gene))
               next
             }
             
@@ -207,7 +207,6 @@ selection.intensity.calculation.function <- function(genes_for_analysis,
               seq.exon.end.vec[1:(length(seq.exon.end.vec)-1)] <- exon.ends[start.pos:(end.pos-1)]
             }
             
-            # print(paste("This isoform:", LabReference$name[this.gene.ref.loc.choice], "This isoform length:",sum(seq.exon.end.vec-seq.exon.start.vec),sep=" "))
             
             length.vec[i] <- sum(seq.exon.end.vec-seq.exon.start.vec) #total length of this isoform
             
@@ -223,16 +222,16 @@ selection.intensity.calculation.function <- function(genes_for_analysis,
             }
             
             mut.count.vec[i] <- this.count #Record total number of mutations within the isoform
-            # print(paste("Mutations in this isoform:",this.count,sep=" "))
+        
           }
           if(cds.start==cds.end){
-            print(paste("The cds.start equals the cds.end for gene: ",this.gene))
+            message(paste("The cds.start equals the cds.end for gene: ",this.gene))
             # next
           }
           
           
           if(mean(mut.count.vec)==0){
-            print("Mutations given in the MAF do not fall into any of the isoforms we reference!")
+            message("Mutations given in the MAF do not fall into any of the isoforms we reference!")
             # next
             
             # if all the lengths of all the isoforms are zero, we need to skip.
@@ -275,10 +274,7 @@ selection.intensity.calculation.function <- function(genes_for_analysis,
         }
         
         
-        # print(paste("Isoform choice: ",this.isoform," Gene: ",this.gene,sep="")) #Tell us what we picked
-        
-        # this.gene.ref.loc.choice <- this.gene.ref.loc[pick] #get the location within the reference file for this specific gene choice. 
-        
+
         this.strand <- LabReference$strand[this.gene.ref.loc.choice] #get which strand this isoform information is on
         
         #Isoform position data 
@@ -344,7 +340,7 @@ selection.intensity.calculation.function <- function(genes_for_analysis,
         
         #If there is no mutation rate data for this gene, tell us.
         if(length(mut_rates$r_x_X[which(mut_rates$gene==this.gene)])==0){
-          print(paste("There is no mutation rate data for gene ",this.gene))
+          message(paste("There is no mutation rate data for gene ",this.gene))
           next
         }
         
@@ -385,7 +381,7 @@ selection.intensity.calculation.function <- function(genes_for_analysis,
           mutations.to.cut <- rbind(mutations.to.cut,this.gene_MAF[not.matching,c("Hugo_Symbol","Chromosome","Start_Position")])
           this.gene_MAF <- this.gene_MAF[-not.matching,]
           if(nrow(this.gene_MAF)==0){
-            print(paste("After removing inconsistencies between the reference genome and the MAF file, there are no substitutions left to analyze."))
+            message(paste("After removing inconsistencies between the reference genome and the MAF file, there are no substitutions left to analyze."))
             next
           }
         }
@@ -839,7 +835,7 @@ selection.intensity.calculation.function <- function(genes_for_analysis,
         
         mut.spots.nuc <- which(Nuc.tally.matrix!=0,arr.ind = T)
         if(nrow(mut.spots.nuc)==0 & nrow(outside.nucs)==0){
-          print("No mutations to tally!")
+          message("No mutations to tally!")
           next
         }
         
@@ -854,7 +850,7 @@ selection.intensity.calculation.function <- function(genes_for_analysis,
         #TODO, do not need to generate entire AA.gamma.matrix, may be wasting memory and computation time. 
         mut.spots <- which(AA.tally.matrix!=0,arr.ind=T)
         if(nrow(mut.spots)==0 & nrow(outside.nucs)==0){
-          print("No mutations to tally!")
+          message("No mutations to tally!")
           next
         }
         
@@ -873,7 +869,7 @@ selection.intensity.calculation.function <- function(genes_for_analysis,
             
             
             
-            if(AA.mut.matrix[mut.spots[i,1],mut.spots[i,2]]==0){message(paste("The mutation rate for this mutation is listed as ZERO"));print(mut.spots[i,])
+            if(AA.mut.matrix[mut.spots[i,1],mut.spots[i,2]]==0){message(paste("The mutation rate for this mutation is listed as ZERO"));message(mut.spots[i,])
             }else{
               AA.gamma.matrix[mut.spots[i,1],mut.spots[i,2]] <- lambda.calc(n.one = AA.tally.matrix[mut.spots[i,1],mut.spots[i,2]],n.zero = (tumor.number-AA.tally.matrix[mut.spots[i,1],mut.spots[i,2]]))/AA.mut.matrix[mut.spots[i,1],mut.spots[i,2]]
               
@@ -949,7 +945,7 @@ selection.intensity.calculation.function <- function(genes_for_analysis,
         #output_from_mainMAF should have all possible mutations in the bootstrap MAFs
         
         if(length(which(output_from_mainMAF$complete_mutation_data$Gene==this.gene))==0){
-          print(paste("There is no previous selection data for ",this.gene))
+          message(paste("There is no previous selection data for ",this.gene))
           next
         }
         
@@ -977,7 +973,7 @@ selection.intensity.calculation.function <- function(genes_for_analysis,
         
         
         if(nrow(this.gene_MAF)==0){
-          print(paste("All the data for this gene is from another chromosome, after cleaning based on the isoform picked for the original analysis"))
+          message(paste("All the data for this gene is from another chromosome, after cleaning based on the isoform picked for the original analysis"))
           next
         }
         
@@ -1071,7 +1067,7 @@ selection.intensity.calculation.function <- function(genes_for_analysis,
         all.muts <- rbind(all.muts,added.rows)
       }
     }else{
-      print(paste("The gene ",this.gene," is not in the MAF file!",sep=""))
+      message(paste("The gene ",this.gene," is not in the MAF file!",sep=""))
     }
     
     if(zzz%%1000==0){message(paste("Gene number: ",zzz," out of ",length(genes_for_analysis)))} #If zzz is a multiple of 1000 print the progress
