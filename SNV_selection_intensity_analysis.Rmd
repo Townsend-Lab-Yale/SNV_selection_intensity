@@ -115,7 +115,7 @@ source("R/synonym_matcher.R")
 
 MAF_for_analysis <- synonym.matcher.function(input_to_be_changed = MAF_for_analysis,synonym.table = read.csv(file='input_data/matching_table.txt',stringsAsFactors = F,sep='\t'),covariates.file = read.table(file='input_data/LUNG_expression.txt',sep='\t',header = T,stringsAsFactors = F),isoforms_or_MAF = 'MAF')
 
-isoforms <- synonym.matcher.function(input_to_be_changed = read.csv(file='input_data/UCSC_RefSeqGenes_refFlat.txt',header = T,sep='\t',stringsAsFactors = F),synonym.table = read.csv(file='input_data/matching_table.txt',stringsAsFactors = F,sep='\t'),covariates.file = read.table(file='input_data/LUNG_expression.txt',sep='\t',header = T,stringsAsFactors = F),isoforms_or_MAF = 'isoforms')
+isoforms <- synonym.matcher.function(input_to_be_changed = read.csv(file='input_data/UCSC_refseq_refFlat_hg19_short.txt',header = T,sep='\t',stringsAsFactors = F),synonym.table = read.csv(file='input_data/matching_table.txt',stringsAsFactors = F,sep='\t'),covariates.file = read.table(file='input_data/LUNG_expression.txt',sep='\t',header = T,stringsAsFactors = F),isoforms_or_MAF = 'isoforms')
 
 save(MAF_for_analysis,file='output_data/MAF_for_analysis_LUAD.RData')
 write.table(MAF_for_analysis,file='output_data/MAF_for_analysis_LUAD.txt',quote = F,sep='\t',row.names = F)
@@ -127,7 +127,7 @@ save(isoforms,file='output_data/Isoforms_LUAD.RData')
 
 # Calculate mutation rate with MutSigCV
 
-```{r mutsig directory}
+```{r mutsig directory, warning=F}
 dir.create("MutSigCV") #Download and unzip MutSigCV 1.41 here 
 ```
 
@@ -201,7 +201,9 @@ selection.output <- selection.intensity.calculation.function(genes_for_analysis 
                                                                  LabReference =  isoforms,
                                                                  translations =  read.csv(file = "input_data/translations.csv",header = T,stringsAsFactors = F),
                                                                  mut_rates = read.csv(file="MutSigCV/MutSigCV_1.41/gene_rates.txt",header = T,stringsAsFactors = F,sep="\t"),
-                                                                 low.mut = read.csv(file="MutSigCV/MutSigCV_1.41/overall_rates.txt",header = F,stringsAsFactors = F,sep="\t"),tumor.number = length(unique(MAF_for_analysis$Unique_patient_identifier)),mutsig_siggenes = read.csv(file="MutSigCV/MutSigCV_1.41/mutsig_output/.sig_genes.txt",header = T,stringsAsFactors = F,sep="\t"))
+                                                                 low.mut = read.csv(file="MutSigCV/MutSigCV_1.41/overall_rates.txt",header = F,stringsAsFactors = F,sep="\t"),
+                                                             tumor.number = length(unique(MAF_for_analysis$Unique_patient_identifier)),
+                                                             mutsig_siggenes = read.csv(file="MutSigCV/MutSigCV_1.41/mutsig_output/.sig_genes.txt",header = T,stringsAsFactors = F,sep="\t"))
 
 
 save(selection.output,file = "output_data/selection_intensity_output.RData")
