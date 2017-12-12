@@ -1,5 +1,7 @@
 
 # Analyzing data off the cluster
+# 
+
 
 # Figure with all high effect size data ---- 
 
@@ -38,6 +40,7 @@ colnames(tumor.num.matrix) <- c("tumor","labs","nums")
 
 for(i in 1:length(unique(recurrent.data$tumor_type))){
   
+  #Load in the MAF files corresponding to the tumor types of interest. 
   load(paste("~/Documents/Selection_analysis/",unique(recurrent.data$tumor_type)[i],"/MAF_",unique(recurrent.data$tumor_type)[i],".RData",sep=""))
 
   tumors <- unique(MAF_for_analysis$Unique_patient_identifier)
@@ -184,7 +187,7 @@ ggsave(filename = "figures/full_selection_data.pdf",plot = g,width = 15,height =
 
 
 
-# Figure for manuscript----
+# Lollipop figure for manuscript----
 
 
 
@@ -281,8 +284,266 @@ ggsave(filename = "figures/reduced_selection_data.png",width = 12,height = 12,dp
 
 
 
+# Tornado plot figure for manuscript ---- 
+# 
+# subset the data to plot
+LUAD.data <- subset(combined_all_data, tumor_type == "LUAD")
+LUSC.data <- subset(combined_all_data, tumor_type == "LUSC")
+
+#need to figure out common genes among tumor types and asign colors 
+# LUAD.and.LUSC.data <- subset(combined_all_data, (tumor_type == "LUSC" | tumor_type == "LUAD") & freq>1 )
+# table(LUAD.and.LUSC.data$Gene)
+
+
+
+LUAD.data <- LUAD.data[which(LUAD.data$freq > 1),]
+
+LUAD.data <- LUAD.data[which(!is.na(LUAD.data$Gene)),]
+LUAD.data <- LUAD.data[order(-LUAD.data$gamma_epistasis),]
+
+if(nrow(LUAD.data)>25){
+  LUAD.data.ordered <- LUAD.data[1:25,] #
+}else{
+  LUAD.data.ordered <- LUAD.data 
+}
+LUAD.data.ordered <- LUAD.data.ordered[order(LUAD.data.ordered$gamma_epistasis),]
+LUAD.data.ordered$Name <- NA
+
+for(i in 1:nrow(LUAD.data.ordered)){
+  LUAD.data.ordered$Name[i] <- paste(LUAD.data.ordered$Gene[i]," ",ifelse(!is.na(LUAD.data.ordered$AA_Ref[i]),paste(LUAD.data.ordered$AA_Ref[i],LUAD.data.ordered$AA_Pos[i],LUAD.data.ordered$AA_Change[i],sep=""),"NCSNV"),sep="")
+}
+
+#If the name is not unique, need to make it unique
+if(length(which(table(LUAD.data.ordered$Name)>1))>0){
+  nonunique <- which(table(LUAD.data.ordered$Name)>1)
+  for(k in 1:length(nonunique)){
+    these.pos <- which(LUAD.data.ordered$Name==names(nonunique[k]))
+    
+    for(j in 1:length(these.pos)){
+      LUAD.data.ordered$Name[these.pos[j]] <- paste(LUAD.data.ordered$Name[these.pos[j]],j)  
+    }
+    
+  }
+  
+}
+
+
+# LUAD.data.ordered$Name <- paste(LUAD.data.ordered$Gene," ",LUAD.data.ordered$AA_Ref,LUAD.data.ordered$AA_Pos,LUAD.data.ordered$AA_Change,sep="")
+LUAD.data.ordered$Name <- factor(LUAD.data.ordered$Name, levels=unique(LUAD.data.ordered$Name))
+
+LUAD.data.ordered$Name_col <- "black"
+LUAD.data.ordered$Name_col[which(LUAD.data.ordered$MutSigCV_q < 0.1)] <- "red"
 
 
 
 
+LUSC.data <- LUSC.data[which(LUSC.data$freq > 1),]
+
+LUSC.data <- LUSC.data[which(!is.na(LUSC.data$Gene)),]
+LUSC.data <- LUSC.data[order(-LUSC.data$gamma_epistasis),]
+
+if(nrow(LUSC.data)>25){
+  LUSC.data.ordered <- LUSC.data[1:25,] #
+}else{
+  LUSC.data.ordered <- LUSC.data 
+}
+LUSC.data.ordered <- LUSC.data.ordered[order(LUSC.data.ordered$gamma_epistasis),]
+LUSC.data.ordered$Name <- NA
+
+for(i in 1:nrow(LUSC.data.ordered)){
+  LUSC.data.ordered$Name[i] <- paste(LUSC.data.ordered$Gene[i]," ",ifelse(!is.na(LUSC.data.ordered$AA_Ref[i]),paste(LUSC.data.ordered$AA_Ref[i],LUSC.data.ordered$AA_Pos[i],LUSC.data.ordered$AA_Change[i],sep=""),"NCSNV"),sep="")
+}
+
+#If the name is not unique, need to make it unique
+if(length(which(table(LUSC.data.ordered$Name)>1))>0){
+  nonunique <- which(table(LUSC.data.ordered$Name)>1)
+  for(k in 1:length(nonunique)){
+    these.pos <- which(LUSC.data.ordered$Name==names(nonunique[k]))
+    
+    for(j in 1:length(these.pos)){
+      LUSC.data.ordered$Name[these.pos[j]] <- paste(LUSC.data.ordered$Name[these.pos[j]],j)  
+    }
+    
+  }
+  
+}
+
+
+# LUSC.data.ordered$Name <- paste(LUSC.data.ordered$Gene," ",LUSC.data.ordered$AA_Ref,LUSC.data.ordered$AA_Pos,LUSC.data.ordered$AA_Change,sep="")
+LUSC.data.ordered$Name <- factor(LUSC.data.ordered$Name, levels=unique(LUSC.data.ordered$Name))
+
+LUSC.data.ordered$Name_col <- "black"
+LUSC.data.ordered$Name_col[which(LUSC.data.ordered$MutSigCV_q < 0.1)] <- "red"
+
+
+
+# determining colors for the plot 
+
+which(table(c(LUAD.data.ordered$Gene,LUSC.data.ordered$Gene))>1)
+# 5 gene names 
+# BRAF CTNNB1   KRAS NFE2L2   TP53 
+# 3      6     13     19     28 
+
+LUAD.and.LUSC.ord.bound <- rbind(LUAD.data.ordered,LUSC.data.ordered)
+
+LUAD.and.LUSC.ord.bound$bar_color <- "black"
+
+library(RColorBrewer)
+
+colors.to.give <- brewer.pal(n = 5, name = "Set1")
+
+LUAD.and.LUSC.ord.bound$bar_color[which(LUAD.and.LUSC.ord.bound$Gene=="BRAF")] <- colors.to.give[1]
+LUAD.and.LUSC.ord.bound$bar_color[which(LUAD.and.LUSC.ord.bound$Gene=="CTNNB1")] <- colors.to.give[2]
+LUAD.and.LUSC.ord.bound$bar_color[which(LUAD.and.LUSC.ord.bound$Gene=="KRAS")] <- colors.to.give[3]
+LUAD.and.LUSC.ord.bound$bar_color[which(LUAD.and.LUSC.ord.bound$Gene=="NFE2L2")] <- colors.to.give[4]
+LUAD.and.LUSC.ord.bound$bar_color[which(LUAD.and.LUSC.ord.bound$Gene=="TP53")] <- colors.to.give[5]
+
+LUAD.data.ordered <- LUAD.and.LUSC.ord.bound[which(LUAD.and.LUSC.ord.bound$tumor_type=="LUAD"),]
+LUSC.data.ordered <- LUAD.and.LUSC.ord.bound[which(LUAD.and.LUSC.ord.bound$tumor_type=="LUSC"),]
+
+#adapted from http://stackoverflow.com/questions/18265941/two-horizontal-bar-charts-with-shared-axis-in-ggplot2-similar-to-population-pyr
+library('grid')
+library('gridExtra')
+library(ggplot2)
+source("R/fancy_scientific_code.R")
+
+
+# LUAD tornado ----
+
+tumor.name <- "LUAD"
+
+g.mid <- ggplot(LUAD.data.ordered,aes(x=1,y=Name)) +
+  geom_text(aes(label=Name,color=factor(Name_col)),size=6) +
+  # geom_segment(aes(x=0.94,xend=0.96,yend=Name)) +
+  # geom_segment(aes(x=1.04,xend=1.065,yend=Name)) +
+  ggtitle("") +
+  ylab(NULL) + 
+  scale_x_continuous(expand=c(0,0),limits=c(0.94,1.065)) + ggtitle(tumor.name) + scale_colour_manual(values=c("black","red")) +
+  theme(axis.title=element_blank(),
+        panel.grid=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        panel.background=element_blank(),
+        axis.text.x=element_text(color=NA,size=12),
+        axis.ticks.x=element_line(color=NA),
+        plot.margin = unit(c(1,-1,1,-1), "mm"),legend.position = "none",plot.title = element_text(hjust = 0.5))
+g.mid
+
+luad.col <- as.character(LUAD.data.ordered$bar_color)
+names(luad.col) <- as.character(LUAD.data.ordered$Gene)
+
+g1 <- ggplot(data=LUAD.data.ordered,aes(x=Name,y=mu,fill=Gene)) +
+  geom_bar(stat="identity") + scale_fill_manual(values=luad.col) + ggtitle("Mutation rate")  +
+  theme(axis.title.x = element_blank(), 
+        axis.title.y = element_blank(), 
+        axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank(), 
+        plot.margin = unit(c(1,-1,1,10), "mm")) +
+  theme(panel.background = element_blank()) +
+  theme(panel.grid.major =element_line(color="lightgrey"),panel.grid.minor =element_line(color="lightgrey")) +
+  theme(panel.grid.major.y = element_blank(),panel.grid.minor.y = element_blank()) +
+  geom_text(aes(label=round(mu*1e6,2)), vjust=-0.5, hjust=0.5, position=position_dodge(width=0.9),size=3,angle=90) +
+  geom_text(aes(label=freq,y=-max(mu)/26), position=position_dodge(width=0.9),size=5,angle=0,color="black") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(legend.position = 'none',axis.text.x = element_text(size=12)) +
+  scale_y_reverse(labels=fancy_scientific) + coord_flip() 
+g1
+
+g2 <- ggplot(data=LUAD.data.ordered, aes(x=Name,y=gamma_epistasis,fill=Gene)) +
+  geom_bar(stat="identity") + ggtitle("Selection intensity") + scale_fill_manual(values=luad.col) +
+  theme(axis.title.x = element_blank(), axis.title.y = element_blank(), 
+        axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+        plot.margin = unit(c(1,5,1,-1), "mm")) +
+  theme(panel.background = element_blank()) +
+  theme(panel.grid.major =element_line(color="lightgrey"),panel.grid.minor =element_line(color="lightgrey")) +
+  theme(panel.grid.major.y = element_blank(),panel.grid.minor.y = element_blank()) +
+  theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(size=12)) +
+  coord_flip() + theme(legend.position = c(0.85, .5),legend.text = element_text(size=10)) + theme(legend.position="none")
+g2
+
+gg1 <- ggplot_gtable(ggplot_build(g1))
+gg2 <- ggplot_gtable(ggplot_build(g2))
+gg.mid <- ggplot_gtable(ggplot_build(g.mid))
+
+grid.arrange(gg1,gg.mid,gg2,ncol=3,widths=c(4.25/10,2/10,3.5/10))
+
+
+gg.combined.luad <- arrangeGrob(gg1,gg.mid,gg2,ncol=3,widths=c(5/10,3/10,5/10))
+ggsave(gg.combined.luad, filename = paste("figures/selection_tornado_plot_",tumor.name,".png",sep=""),units = "in",height=7,width = 10)
+
+
+
+
+
+
+
+# LUSC tornado ----
+
+
+#from http://stackoverflow.com/questions/18265941/two-horizontal-bar-charts-with-shared-axis-in-ggplot2-similar-to-population-pyr
+library('grid')
+library('gridExtra')
+library(ggplot2)
+source("R/fancy_scientific_code.R")
+
+tumor.name <- "LUSC"
+
+g.mid <- ggplot(LUSC.data.ordered,aes(x=1,y=Name)) +
+  geom_text(aes(label=Name,color=factor(Name_col)),size=6) +
+  # geom_segment(aes(x=0.94,xend=0.96,yend=Name)) +
+  # geom_segment(aes(x=1.04,xend=1.065,yend=Name)) +
+  ggtitle("") +
+  ylab(NULL) + 
+  scale_x_continuous(expand=c(0,0),limits=c(0.94,1.065)) + ggtitle(tumor.name) + scale_colour_manual(values=c("black","red")) +
+  theme(axis.title=element_blank(),
+        panel.grid=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        panel.background=element_blank(),
+        axis.text.x=element_text(color=NA,size=12),
+        axis.ticks.x=element_line(color=NA),
+        plot.margin = unit(c(1,-1,1,-1), "mm"),legend.position = "none",plot.title = element_text(hjust = 0.5))
+g.mid
+
+LUSC.col <- as.character(LUSC.data.ordered$bar_color)
+names(LUSC.col) <- as.character(LUSC.data.ordered$Gene)
+
+g1 <- ggplot(data=LUSC.data.ordered,aes(x=Name,y=mu,fill=Gene)) +
+  geom_bar(stat="identity") + scale_fill_manual(values=LUSC.col) + ggtitle("Mutation rate")  +
+  theme(axis.title.x = element_blank(), 
+        axis.title.y = element_blank(), 
+        axis.text.y = element_blank(), 
+        axis.ticks.y = element_blank(), 
+        plot.margin = unit(c(1,-1,1,10), "mm")) +
+  theme(panel.background = element_blank()) +
+  theme(panel.grid.major =element_line(color="lightgrey"),panel.grid.minor =element_line(color="lightgrey")) +
+  theme(panel.grid.major.y = element_blank(),panel.grid.minor.y = element_blank()) +
+  geom_text(aes(label=round(mu*1e6,2)), vjust=-0.5, hjust=0.5, position=position_dodge(width=0.9),size=3,angle=90) +
+  geom_text(aes(label=freq,y=-max(mu)/26), position=position_dodge(width=0.9),size=5,angle=0,color="black") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(legend.position = 'none',axis.text.x = element_text(size=12)) +
+  scale_y_reverse(labels=fancy_scientific) + coord_flip() 
+g1
+
+g2 <- ggplot(data=LUSC.data.ordered, aes(x=Name,y=gamma_epistasis,fill=Gene)) +
+  geom_bar(stat="identity") + ggtitle("Selection intensity") + scale_fill_manual(values=LUSC.col) +
+  theme(axis.title.x = element_blank(), axis.title.y = element_blank(), 
+        axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+        plot.margin = unit(c(1,5,1,-1), "mm")) +
+  theme(panel.background = element_blank()) +
+  theme(panel.grid.major =element_line(color="lightgrey"),panel.grid.minor =element_line(color="lightgrey")) +
+  theme(panel.grid.major.y = element_blank(),panel.grid.minor.y = element_blank()) +
+  theme(plot.title = element_text(hjust = 0.5),axis.text.x = element_text(size=12)) +
+  coord_flip() + theme(legend.position = c(0.85, .5),legend.text = element_text(size=10)) + theme(legend.position="none")
+g2
+
+gg1 <- ggplot_gtable(ggplot_build(g1))
+gg2 <- ggplot_gtable(ggplot_build(g2))
+gg.mid <- ggplot_gtable(ggplot_build(g.mid))
+
+grid.arrange(gg1,gg.mid,gg2,ncol=3,widths=c(4.25/10,2/10,3.5/10))
+
+
+gg.combined.LUSC <- arrangeGrob(gg1,gg.mid,gg2,ncol=3,widths=c(5/10,3/10,5/10))
+ggsave(gg.combined.LUSC, filename = paste("figures/selection_tornado_plot_",tumor.name,".png",sep=""),units = "in",height=7,width = 10)
 
