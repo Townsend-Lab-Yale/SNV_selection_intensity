@@ -6,12 +6,14 @@ data.push.function <- function(data.to.push,
                                x.max,
                                touching.distance,
                                pushing.distance,
+                               gamma.min = 3,
                                x.data = 'gamma_epistasis',
                                cat.data = 'tumor_type',
                                max.iter = 1e4){
   
   data.to.push$new_x <- data.to.push$gamma_epistasis
-  
+  data.to.push <- data.to.push[which(data.to.push[,colnames(data.to.push)[which(colnames(data.to.push)==x.data)]]>gamma.min),]
+  # data.to.push <- subset(data.to.push, x.data>gamma.min)
   
   categories <- (unique(data.to.push[cat.data]))
   

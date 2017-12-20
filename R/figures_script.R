@@ -5,7 +5,7 @@
 
 # Figure with all high effect size data ---- 
 
-load("~/Documents/Selection_analysis/combined_selection_output.RData")
+load("~/Documents/Selection_analysis/combined_selection_output_withlargeSKCM.RData")
 
 supp.table.1 <- combined_all_data[which(combined_all_data$freq>1),]
 colnames(supp.table.1)[which(colnames(supp.table.1)=="gamma_epistasis")] <- "selection_intensity"
@@ -34,8 +34,8 @@ recurrent.data$gamma_epistasis <- log10(recurrent.data$gamma_epistasis)
 tumor.num.vec <- rep(NA,length=length(unique(recurrent.data$tumor_type)))
 
 
-tumor.num.matrix <- as.data.frame(matrix(data = NA,nrow=length(unique(recurrent.data$tumor_type)),ncol=3))
-colnames(tumor.num.matrix) <- c("tumor","labs","nums")
+tumor.num.matrix <- as.data.frame(matrix(data = NA,nrow=length(unique(recurrent.data$tumor_type)),ncol=4))
+colnames(tumor.num.matrix) <- c("tumor","labs","nums","total")
 
 
 for(i in 1:length(unique(recurrent.data$tumor_type))){
@@ -55,6 +55,7 @@ for(i in 1:length(unique(recurrent.data$tumor_type))){
   tumor.num.vec[i] <- this.tumor.number
   tumor.num.matrix$nums[i] <- this.tumor.number
   tumor.num.matrix$labs[i] <- ifelse(YG.length==0,paste("italic(n)[TCGA]==",TCGA.length,sep=""),paste("italic(n)[TCGA]==",TCGA.length,"~italic(n)[YG]==",YG.length,sep=""))
+  tumor.num.matrix$total[i] <- paste("italic(n)==",this.tumor.number,sep="")
 
   print(paste(i,length(tumors)))
 }
@@ -186,12 +187,131 @@ ggsave(filename = "figures/full_selection_data.pdf",plot = g,width = 15,height =
 # ggsave(filename = "figures/full_selection_data_large.pdf",plot = g,width = 36,height = 24)
 
 
+# All data, top to bottom, 2e4 and above ---- 
+
+
+
+data.to.push <- data.push.function(data.to.push = top.hits,x.min = log10(2e4),x.max = 7.5,touching.distance = 0.03,pushing.distance = 0.03/25,x.data = 'gamma_epistasis',cat.data = 'tumor_type',max.iter = 1e5,gamma.min = log10(2e4))
+
+
+data.to.push$Gene_freq <- NA
+for(i in 1:nrow(data.to.push)){
+  data.to.push$Gene_freq[i] <- table(data.to.push$Gene)[data.to.push$Gene[i]]
+}
+
+
+data.to.push$Pval <- as.factor((data.to.push$MutSigCV_p<0.05)*1)
+data.to.push$Pval_col <- "P > 0.05"
+data.to.push$Pval_col[which(data.to.push$Pval==1)] <- "P <= 0.05"
+
+data.to.push$Qval <- as.factor((data.to.push$MutSigCV_q<0.1)*1)
+data.to.push$Qval_col <- "Q > 0.1"
+data.to.push$Qval_col[which(data.to.push$Qval==1)] <- "Q <= 0.1"
+
+levels(recurrent.data$tumor_type)[which(levels(recurrent.data$tumor_type)=="HNSC_HPVpos")] <- "HPV^{'+'}~HNSC"
+recurrent.data$tumor_type[which(recurrent.data$tumor_type=="HNSC_HPVpos")] <- "HPV^{'+'}~HNSC"
+
+levels(recurrent.data$tumor_type)[which(levels(recurrent.data$tumor_type)=="HNSC_HPVneg")] <-"HPV^{'-'}~HNSC"
+recurrent.data$tumor_type[which(recurrent.data$tumor_type=="HNSC_HPVneg")] <- "HPV^{'-'}~HNSC"
+
+
+# which labels need to be lifted higher than others? 
+# recurrent.data$label_lifted <- F
+# recurrent.data$label_lifted[which((recurrent.data$tumor_type == "SKCMP" & recurrent.data$Name == "BRAF V600E"))] <- T
+data.to.push$label_lifted <- F
+data.to.push$label_lifted[which((data.to.push$tumor_type == "SKCMP" & data.to.push$Name == "BRAF V600E") |
+                                  (data.to.push$tumor_type == "SKCMM" & data.to.push$Name == "BRAF V600E") |
+                                  (data.to.push$tumor_type == "THCA" & data.to.push$Name == "BRAF V600E") | 
+                                  (data.to.push$tumor_type == "LGG" & data.to.push$Name == "IDH1 R132H") |
+                                  (data.to.push$tumor_type == "PAAD" & data.to.push$Name == "KRAS G12R") | 
+                                  (data.to.push$tumor_type == "PAAD" & data.to.push$Name == "KRAS G12V") |
+                                  (data.to.push$tumor_type == "PAAD" & data.to.push$Name == "KRAS G12D"))] <- T
+
+
+recurrent.data$tumor_type <- factor(recurrent.data$tumor_type, levels=rev(levels(recurrent.data$tumor_type)))
+data.to.push$tumor_type <- factor(data.to.push$tumor_type, levels=rev(levels(data.to.push$tumor_type)))
+
+
+
+
+
+lolli <- ggplot(data=subset(recurrent.data,gamma_epistasis>log10(2e4)), aes(y=gamma_epistasis,x=tumor_type))
+lolli <- lolli + geom_point(shape="—") 
+
+
+lolli <- lolli + geom_text(data=subset(data.to.push,gamma_epistasis>log10(2e4)),aes(y=new_x,x=ifelse(label_lifted==T, as.numeric(tumor_type)+0.24,as.numeric(tumor_type)+0.21),label=Name),angle=0,size=2.8,hjust = 0,fontface = 'bold')
+lolli <- lolli + geom_text(data=subset(data.to.push,Gene_freq>1 & gamma_epistasis>log10(2e4)),aes(y=new_x,x=ifelse(label_lifted==T, as.numeric(tumor_type)+0.24,as.numeric(tumor_type)+0.21),label=Gene,color=Gene),angle=0,size=2.8,hjust=0,fontface = 'bold') + scale_colour_discrete(guide = FALSE)
+
+
+
+# data2 <- data.to.push
+
+# tumor_labs <- data.frame(x=0,y=1:length(unique(recurrent.data$tumor_label)),lab=unique(recurrent.data$tumor_label))
+# tumor_labs$lab <- factor(tumor_labs$lab, levels= levels(recurrent.data$tumor_label))
+# tumor.num.matrix[2,"labs"] <- "'italic(n)[TCGA]==104\n'~'italic(n)[YG]==47'"
+lolli <-  lolli + geom_text(data = tumor.num.matrix, aes(y=log10(2e4)-0.32,x=(nrow(tumor.num.matrix)):1,label=total),parse = T,hjust=0,size=4)
+
+
+HPV.status <- as.data.frame(matrix(nrow=2,ncol=1,data=c("HPV^{'+'}","HPV^{'-'}")))
+lolli <-  lolli + geom_text(data = HPV.status, aes(y=log10(2e4)-.27,x=c(13,12),label=V1),parse = T,hjust=0,size=4.5)
+
+# lolli <- lolli + geom_point(data=data.to.push,aes(x=new_x,y=as.numeric(tumor_type)+0.1,size=Prop_tumors_with_specific_mut, fill=factor(col)),shape=21,alpha=0.8)+ scale_fill_manual(values = c("<1%" = "purple", "1–2%" = "blue", "2–3%" = "lightblue", "3–5%" = "green", "5–10%" = "orange", ">10%" = "red"))
+pvals <- list(expression(italic("P") <= 0.05), expression(italic("P") > 0.05))
+qvals <- list(expression(italic("Q") <= 0.1), expression(italic("Q") > 0.1))
+
+lolli <- lolli + geom_point(data=subset(data.to.push, gamma_epistasis>log10(2e4)),aes(y=new_x,x=as.numeric(tumor_type)+0.15,size=Prop_tumors_with_specific_mut, fill=Qval_col),shape=21,alpha=0.8)+ scale_fill_manual(labels = qvals,values = c("red","black"),breaks=c("Q <= 0.1","Q > 0.1"))
+
+lolli <- lolli + geom_segment(data=subset(data.to.push, gamma_epistasis>log10(2e4)),aes(y=gamma_epistasis,x=as.numeric(tumor_type)+0.02,yend=new_x,xend=as.numeric(tumor_type)+0.1),size=0.2,alpha=0.8)
+# lolli
+
+xlabels <- levels(recurrent.data$tumor_type)
+xlabels[12] <- "HNSC"
+xlabels[13] <- "HNSC"
+# 
+# xlabels[3] <- "'ahhhh\nWe' ~are%=>% bold(here[123])"
+# xlabels[3] <- "'HNSC\nHPV' ~^{'+'}"
+
+lolli <- lolli + theme_bw() + 
+  coord_cartesian(xlim=c(1,nrow(tumor.num.matrix)+0.5),ylim=c(log10(2e4),max(recurrent.data$gamma_epistasis))) + 
+  scale_size_continuous(breaks = c(0.01,0.05,0.1,0.2,0.4,0.6)) + 
+  labs(size="Prevalence",color="Gene", fill=expression(paste(italic("Q")," value"))) + 
+  guides(size = guide_legend(reverse = TRUE)) + 
+  labs(x="Tumor type",y="Selection intensity") + 
+  scale_y_continuous(breaks=3:7, labels=expression(10^3, 10^4, 10^5,10^6,10^7)) +
+  scale_x_discrete(labels=parse(text=xlabels)) +
+  theme(panel.border = element_blank()) + 
+  theme(plot.margin = unit(c(t=1,r=1.1,b=1.5,l=1),units="cm")) + 
+  theme(axis.title.x = element_text(margin = margin(t = 0, r = 0, b = 0, l = 0),size=15),
+        axis.text.x = element_text(size=15,hjust=0,color="black"),axis.text.y = element_text(size=15,color="black"),axis.title.y=element_text(size=15)) +
+  theme(legend.position = c(0.15,0.70)) + 
+  theme(legend.background = element_rect(fill = 'grey95')) + theme(axis.title.x = element_text(vjust=-12))
+# theme(axis.title.y = element_text(margin = margin(t = 0, r = 20, b = 0, l = 0)))
+
+lolli_plot <- ggplot_gtable(ggplot_build(lolli))
+lolli_plot$layout$clip[lolli_plot$layout$name == "panel"] <- "off"
+library(grid)
+library(gridExtra)
+
+g <- arrangeGrob(lolli_plot)
+# grid.draw(g)
+ggsave(filename = "figures/selection_data_2e4_TtoB.png",width = 36,height = 12,dpi = 300,plot = g)
+ggsave(filename = "figures/selection_data_2e4_TtoB.pdf",width = 36,height = 12,plot = g,device=cairo_pdf)
+
+
+
+
+
+
+
+
+
+
 
 # Lollipop figure for manuscript----
 
 
 
-recurrent.data2 <- recurrent.data[which(recurrent.data$tumor_type=="COAD" |
+recurrent.data2 <- recurrent.data[which(recurrent.data$tumor_type=="SKCMP" |
                                           recurrent.data$tumor_type=="LUAD" |
                                           recurrent.data$tumor_type=="READ" |
                                           recurrent.data$tumor_type=="HPV^{'+'}~HNSC" |
@@ -205,7 +325,7 @@ data.to.push <- data.push.function(data.to.push = top.hits,x.min = 1,x.max = 7.5
 
 
 
-data.to.push2 <- data.to.push[which(data.to.push$tumor_type=="COAD" |
+data.to.push2 <- data.to.push[which(data.to.push$tumor_type=="SKCMP" |
                                       data.to.push$tumor_type=="LUAD" |
                                       data.to.push$tumor_type=="READ" |
                                       data.to.push$tumor_type=="HNSC_HPVpos" |
@@ -220,7 +340,7 @@ for(i in 1:nrow(data.to.push2)){
 }
 
 
-tumor.num.matrix2 <- tumor.num.matrix[which(tumor.num.matrix$tumor=="COAD" |
+tumor.num.matrix2 <- tumor.num.matrix[which(tumor.num.matrix$tumor=="SKCMP" |
                                               tumor.num.matrix$tumor=="LUAD" |
                                               tumor.num.matrix$tumor=="READ" |
                                               tumor.num.matrix$tumor=="HNSC_HPVpos" |
@@ -237,12 +357,26 @@ data.to.push2$Qval <- as.factor((data.to.push2$MutSigCV_q<0.1)*1)
 data.to.push2$Qval_col <- "Q > 0.1"
 data.to.push2$Qval_col[which(data.to.push2$Qval==1)] <- "Q <= 0.1"
 
+
+data.to.push2$label_lifted <- F
+data.to.push2$label_lifted[which((data.to.push2$tumor_type == "SKCMP" & data.to.push2$Name == "BRAF V600E") | 
+                                  (data.to.push2$tumor_type == "LGG" & data.to.push2$Name == "IDH1 R132H"))] <- T
+
+
+data.to.push2$tumor_type <- factor(data.to.push2$tumor_type, levels=c("READ","SKCMP","HNSC_HPVpos","HNSC_HPVneg","LGG","UCEC","LUSC","LUAD"))
+
+recurrent.data2$tumor_type <- factor(recurrent.data2$tumor_type, levels=c("READ","SKCMP","HPV^{'+'}~HNSC","HPV^{'-'}~HNSC","LGG","UCEC","LUSC","LUAD"))
+
+tumor.num.matrix2 <- tumor.num.matrix2[c(1,5,4,2,3,6,7,8),] #reorder to our custom order
+
+
+
 lolli <- ggplot(data=subset(recurrent.data2,gamma_epistasis>3), aes(x=gamma_epistasis,y=tumor_type))
 lolli <- lolli + geom_point(shape="I") 
 
 
-lolli <- lolli + geom_text(data=subset(data.to.push2,gamma_epistasis>3),aes(x=new_x,y=ifelse(Name=="IDH1 R132H",as.numeric(tumor_type)+0.23,as.numeric(tumor_type)+0.18),label=Name),angle=90,size=2.8,hjust = 0,fontface = 'bold')
-lolli <- lolli + geom_text(data=subset(data.to.push2,Gene_freq>1 & gamma_epistasis>3),aes(x=new_x,y=ifelse(Name=="IDH1 R132H",as.numeric(tumor_type)+0.23,as.numeric(tumor_type)+0.18),label=Gene,color=Gene),angle=90,size=2.8,hjust = 0,fontface = 'bold') + scale_colour_discrete(guide = FALSE)
+lolli <- lolli + geom_text(data=subset(data.to.push2,gamma_epistasis>3),aes(x=new_x,y=ifelse(label_lifted==T, as.numeric(tumor_type)+0.23,as.numeric(tumor_type)+0.18),label=Name),angle=90,size=2.8,hjust = 0,fontface = 'bold')
+lolli <- lolli + geom_text(data=subset(data.to.push2,Gene_freq>1 & gamma_epistasis>3),aes(x=new_x,y=ifelse(label_lifted==T, as.numeric(tumor_type)+0.23,as.numeric(tumor_type)+0.18),label=Gene,color=Gene),angle=90,size=2.8,hjust = 0,fontface = 'bold') + scale_colour_discrete(guide = FALSE)
 # data2 <- data.to.push
 
 # tumor_labs <- data.frame(x=0,y=1:length(unique(recurrent.data$tumor_label)),lab=unique(recurrent.data$tumor_label))
@@ -271,7 +405,8 @@ lolli <- lolli + theme_bw() +
   theme(axis.title.y = element_text(margin = margin(t = 0, r = 1.5, b = 0, l = 0),size=15),
         axis.text.y = element_text(size=15),axis.text.x = element_text(size=15),axis.title.x=element_text(size=15)) +
   theme(legend.position = c(0.15,0.8)) + 
-  theme(legend.background = element_rect(fill = 'grey95'))
+  theme(legend.background = element_rect(fill = 'grey95')) #+ 
+  # theme(axis.title.y = element_text(margin = margin(t = 0, r = 20, b = 0, l = 0)))
 
 lolli_plot <- ggplot_gtable(ggplot_build(lolli))
 lolli_plot$layout$clip[lolli_plot$layout$name == "panel"] <- "off"
@@ -281,6 +416,238 @@ library(gridExtra)
 g <- arrangeGrob(lolli_plot)
 # grid.draw(g)
 ggsave(filename = "figures/reduced_selection_data.png",width = 12,height = 12,dpi = 300,plot = g)
+
+
+
+# For manuscript, with 2e4 bound ---- 
+
+
+
+
+recurrent.data2 <- recurrent.data[which(recurrent.data$tumor_type=="SKCMP" |
+                                          recurrent.data$tumor_type=="LUAD" |
+                                          recurrent.data$tumor_type=="READ" |
+                                          recurrent.data$tumor_type=="HPV^{'+'}~HNSC" |
+                                          recurrent.data$tumor_type=="HPV^{'-'}~HNSC" |
+                                          recurrent.data$tumor_type=="UCEC" |
+                                          recurrent.data$tumor_type=="LUSC" |
+                                          recurrent.data$tumor_type=="LGG"),]
+
+data.to.push <- data.push.function(data.to.push = top.hits,x.min = log10(2e4),x.max = 7.5,touching.distance = 0.04,pushing.distance = 0.03/25,x.data = 'gamma_epistasis',cat.data = 'tumor_type',max.iter = 1e5,gamma.min = log10(2e4))
+
+head(data.to.push[which(data.to.push$tumor_type=="SKCMP"),])
+
+
+data.to.push2 <- data.to.push[which(data.to.push$tumor_type=="SKCMP" |
+                                      data.to.push$tumor_type=="LUAD" |
+                                      data.to.push$tumor_type=="READ" |
+                                      data.to.push$tumor_type=="HNSC_HPVpos" |
+                                      data.to.push$tumor_type=="HNSC_HPVneg" |
+                                      data.to.push$tumor_type=="UCEC" |
+                                      data.to.push$tumor_type=="LUSC" |
+                                      data.to.push$tumor_type=="LGG"),]
+
+data.to.push2$Gene_freq <- NA
+for(i in 1:nrow(data.to.push2)){
+  data.to.push2$Gene_freq[i] <- table(data.to.push2$Gene)[data.to.push2$Gene[i]]
+}
+
+
+tumor.num.matrix2 <- tumor.num.matrix[which(tumor.num.matrix$tumor=="SKCMP" |
+                                              tumor.num.matrix$tumor=="LUAD" |
+                                              tumor.num.matrix$tumor=="READ" |
+                                              tumor.num.matrix$tumor=="HNSC_HPVpos" |
+                                              tumor.num.matrix$tumor=="HNSC_HPVneg" |
+                                              tumor.num.matrix$tumor=="UCEC" |
+                                              tumor.num.matrix$tumor=="LUSC" |
+                                              tumor.num.matrix$tumor=="LGG"),]
+
+recurrent.data2$tumor_type <- factor(recurrent.data2$tumor_type, levels=intersect(levels(recurrent.data2$tumor_type),unique(recurrent.data2$tumor_type)))
+data.to.push2$tumor_type <- factor(data.to.push2$tumor_type, levels=intersect(levels(data.to.push2$tumor_type),unique(data.to.push2$tumor_type)))
+tumor.num.matrix2[3:4,] <- tumor.num.matrix2[4:3,]
+
+data.to.push2$Qval <- as.factor((data.to.push2$MutSigCV_q<0.1)*1)
+data.to.push2$Qval_col <- "Q > 0.1"
+data.to.push2$Qval_col[which(data.to.push2$Qval==1)] <- "Q <= 0.1"
+
+
+data.to.push2$label_lifted <- F
+data.to.push2$label_lifted[which((data.to.push2$tumor_type == "SKCMP" & data.to.push2$Name == "BRAF V600E") | 
+                                   (data.to.push2$tumor_type == "LGG" & data.to.push2$Name == "IDH1 R132H"))] <- T
+
+
+data.to.push2$tumor_type <- factor(data.to.push2$tumor_type, levels=c("SKCMP","HNSC_HPVpos","HNSC_HPVneg","READ","LGG","UCEC","LUSC","LUAD"))
+
+recurrent.data2$tumor_type <- factor(recurrent.data2$tumor_type, levels=c("SKCMP","HPV^{'+'}~HNSC","HPV^{'-'}~HNSC","READ","LGG","UCEC","LUSC","LUAD"))
+
+tumor.num.matrix2 <- tumor.num.matrix2[c(5,4,2,1,3,6,7,8),] #reorder to our custom order
+
+
+
+lolli <- ggplot(data=subset(recurrent.data2,gamma_epistasis>log10(2e4)), aes(x=gamma_epistasis,y=tumor_type))
+lolli <- lolli + geom_point(shape="I") 
+
+
+lolli <- lolli + geom_text(data=subset(data.to.push2,gamma_epistasis>log10(2e4)),aes(x=new_x,y=ifelse(label_lifted==T, as.numeric(tumor_type)+0.23,as.numeric(tumor_type)+0.18),label=Name),angle=90,size=2.8,hjust = 0,fontface = 'bold')
+lolli <- lolli + geom_text(data=subset(data.to.push2,Gene_freq>1 & gamma_epistasis>log10(2e4)),aes(x=new_x,y=ifelse(label_lifted==T, as.numeric(tumor_type)+0.23,as.numeric(tumor_type)+0.18),label=Gene,color=Gene),angle=90,size=2.8,hjust = 0,fontface = 'bold') + scale_colour_discrete(guide = FALSE)
+# data2 <- data.to.push
+
+# tumor_labs <- data.frame(x=0,y=1:length(unique(recurrent.data$tumor_label)),lab=unique(recurrent.data$tumor_label))
+# tumor_labs$lab <- factor(tumor_labs$lab, levels= levels(recurrent.data$tumor_label))
+lolli <-  lolli + geom_text(data = tumor.num.matrix2, aes(x=max(recurrent.data2$gamma_epistasis)+0.8,y=(1:nrow(tumor.num.matrix2))-0.2,label=labs),parse = T,hjust=1,size=4)
+
+# lolli <- lolli + geom_point(data=data.to.push,aes(x=new_x,y=as.numeric(tumor_type)+0.1,size=Prop_tumors_with_specific_mut, fill=factor(col)),shape=21,alpha=0.8)+ scale_fill_manual(values = c("<1%" = "purple", "1–2%" = "blue", "2–3%" = "lightblue", "3–5%" = "green", "5–10%" = "orange", ">10%" = "red"))
+pvals <- list(expression(italic("P") <= 0.05), expression(italic("P") > 0.05))
+qvals <- list(expression(italic("Q") <= 0.1), expression(italic("Q") > 0.1))
+
+lolli <- lolli + geom_point(data=subset(data.to.push2, gamma_epistasis>log10(2e4)),aes(x=new_x,y=as.numeric(tumor_type)+0.15,size=Prop_tumors_with_specific_mut, fill=Qval_col),shape=21,alpha=0.8)+ scale_fill_manual(labels = qvals,values = c("red","black"),breaks=c("Q <= 0.1","Q > 0.1"))
+
+lolli <- lolli + geom_segment(data=subset(data.to.push2, gamma_epistasis>log10(2e4)),aes(x=gamma_epistasis,y=as.numeric(tumor_type)+0.02,xend=new_x,yend=as.numeric(tumor_type)+0.1),size=0.2,alpha=0.8)
+# lolli
+
+lolli <- lolli + theme_bw() + 
+  coord_cartesian(ylim=c(1,nrow(tumor.num.matrix2)+0.5),xlim=c(log10(2e4),max(recurrent.data$gamma_epistasis)+0.1)) + 
+  scale_size_continuous(breaks = c(0.01,0.05,0.1,0.2,0.4,0.6)) + 
+  labs(size="Prevalence",color="Gene", fill=expression(paste(italic("Q")," value"))) + 
+  guides(size = guide_legend(reverse = TRUE)) + 
+  labs(y="Tumor type",x="Selection intensity") + 
+  scale_x_reverse(breaks=3:7, labels=expression(10^3, 10^4, 10^5,10^6,10^7)) +
+  scale_y_discrete(labels=parse(text=levels(recurrent.data2$tumor_type))) +
+  theme(panel.border = element_blank()) + 
+  theme(plot.margin = unit(c(1,1,1,1.1),units="cm")) + 
+  theme(axis.title.y = element_text(margin = margin(t = 0, r = 1.5, b = 0, l = 0),size=15),
+        axis.text.y = element_text(size=15),axis.text.x = element_text(size=15),axis.title.x=element_text(size=15)) +
+  theme(legend.position = c(0.15,0.8)) + 
+  theme(legend.background = element_rect(fill = 'grey95')) #+ 
+# theme(axis.title.y = element_text(margin = margin(t = 0, r = 20, b = 0, l = 0)))
+
+lolli_plot <- ggplot_gtable(ggplot_build(lolli))
+lolli_plot$layout$clip[lolli_plot$layout$name == "panel"] <- "off"
+library(grid)
+library(gridExtra)
+
+g <- arrangeGrob(lolli_plot)
+# grid.draw(g)
+ggsave(filename = "figures/reduced_selection_data_2e4.png",width = 12,height = 12,dpi = 300,plot = g)
+
+
+
+
+# right to left 
+
+lolli <- ggplot(data=subset(recurrent.data2,gamma_epistasis>log10(2e4)), aes(x=gamma_epistasis,y=tumor_type))
+lolli <- lolli + geom_point(shape="I") 
+
+
+lolli <- lolli + geom_text(data=subset(data.to.push2,gamma_epistasis>log10(2e4)),aes(x=new_x,y=ifelse(label_lifted==T, as.numeric(tumor_type)+0.23,as.numeric(tumor_type)+0.18),label=Name),angle=90,size=2.8,hjust = 0,fontface = 'bold')
+lolli <- lolli + geom_text(data=subset(data.to.push2,Gene_freq>1 & gamma_epistasis>log10(2e4)),aes(x=new_x,y=ifelse(label_lifted==T, as.numeric(tumor_type)+0.23,as.numeric(tumor_type)+0.18),label=Gene,color=Gene),angle=90,size=2.8,hjust = 0,fontface = 'bold') + scale_colour_discrete(guide = FALSE)
+# data2 <- data.to.push
+
+# tumor_labs <- data.frame(x=0,y=1:length(unique(recurrent.data$tumor_label)),lab=unique(recurrent.data$tumor_label))
+# tumor_labs$lab <- factor(tumor_labs$lab, levels= levels(recurrent.data$tumor_label))
+lolli <-  lolli + geom_text(data = tumor.num.matrix2, aes(x=log10(2e4)-0.2,y=(1:nrow(tumor.num.matrix2))-0.2,label=labs),parse = T,hjust=1,size=4)
+
+# lolli <- lolli + geom_point(data=data.to.push,aes(x=new_x,y=as.numeric(tumor_type)+0.1,size=Prop_tumors_with_specific_mut, fill=factor(col)),shape=21,alpha=0.8)+ scale_fill_manual(values = c("<1%" = "purple", "1–2%" = "blue", "2–3%" = "lightblue", "3–5%" = "green", "5–10%" = "orange", ">10%" = "red"))
+pvals <- list(expression(italic("P") <= 0.05), expression(italic("P") > 0.05))
+qvals <- list(expression(italic("Q") <= 0.1), expression(italic("Q") > 0.1))
+
+lolli <- lolli + geom_point(data=subset(data.to.push2, gamma_epistasis>log10(2e4)),aes(x=new_x,y=as.numeric(tumor_type)+0.15,size=Prop_tumors_with_specific_mut, fill=Qval_col),shape=21,alpha=0.8)+ scale_fill_manual(labels = qvals,values = c("red","black"),breaks=c("Q <= 0.1","Q > 0.1"))
+
+lolli <- lolli + geom_segment(data=subset(data.to.push2, gamma_epistasis>log10(2e4)),aes(x=gamma_epistasis,y=as.numeric(tumor_type)+0.02,xend=new_x,yend=as.numeric(tumor_type)+0.1),size=0.2,alpha=0.8)
+# lolli
+
+lolli <- lolli + theme_bw() + 
+  coord_cartesian(ylim=c(1,nrow(tumor.num.matrix2)+0.5),xlim=c(log10(2e4),max(recurrent.data$gamma_epistasis)+0.1)) + 
+  scale_size_continuous(breaks = c(0.01,0.05,0.1,0.2,0.4,0.6)) + 
+  labs(size="Prevalence",color="Gene", fill=expression(paste(italic("Q")," value"))) + 
+  guides(size = guide_legend(reverse = TRUE)) + 
+  labs(y="Tumor type",x="Selection intensity") + 
+  scale_x_continuous(breaks=3:7, labels=expression(10^3, 10^4, 10^5,10^6,10^7)) +
+  scale_y_discrete(labels=parse(text=levels(recurrent.data2$tumor_type))) +
+  theme(panel.border = element_blank()) + 
+  theme(plot.margin = unit(c(1,1,1,1.1),units="cm")) + 
+  theme(axis.title.y = element_text(margin = margin(t = 0, r = 1.5, b = 0, l = 0),size=15),
+        axis.text.y = element_text(size=15),axis.text.x = element_text(size=15),axis.title.x=element_text(size=15)) +
+  theme(legend.position = c(0.85,0.8)) + 
+  theme(legend.background = element_rect(fill = 'grey95')) #+ 
+# theme(axis.title.y = element_text(margin = margin(t = 0, r = 20, b = 0, l = 0)))
+
+lolli_plot <- ggplot_gtable(ggplot_build(lolli))
+lolli_plot$layout$clip[lolli_plot$layout$name == "panel"] <- "off"
+library(grid)
+library(gridExtra)
+
+g <- arrangeGrob(lolli_plot)
+# grid.draw(g)
+ggsave(filename = "figures/reduced_selection_data_2e4_RtL.png",width = 12,height = 12,dpi = 300,plot = g)
+
+
+# Top to bottom
+
+# need to change ordering of the plot
+recurrent.data2$tumor_type <- factor(recurrent.data2$tumor_type, levels=rev(levels(recurrent.data2$tumor_type)))
+data.to.push2$tumor_type <- factor(data.to.push2$tumor_type, levels=rev(levels(data.to.push2$tumor_type)))
+
+lolli <- ggplot(data=subset(recurrent.data2,gamma_epistasis>log10(2e4)), aes(y=gamma_epistasis,x=tumor_type))
+lolli <- lolli + geom_point(shape="—") 
+
+
+lolli <- lolli + geom_text(data=subset(data.to.push2,gamma_epistasis>log10(2e4)),aes(y=new_x,x=ifelse(label_lifted==T, as.numeric(tumor_type)+0.24,as.numeric(tumor_type)+0.21),label=Name),angle=0,size=2.8,hjust = 0,fontface = 'bold')
+lolli <- lolli + geom_text(data=subset(data.to.push2,Gene_freq>1 & gamma_epistasis>log10(2e4)),aes(y=new_x,x=ifelse(label_lifted==T, as.numeric(tumor_type)+0.24,as.numeric(tumor_type)+0.21),label=Gene,color=Gene),angle=0,size=2.8,hjust=0,fontface = 'bold') + scale_colour_discrete(guide = FALSE)
+
+
+
+# data2 <- data.to.push
+
+# tumor_labs <- data.frame(x=0,y=1:length(unique(recurrent.data$tumor_label)),lab=unique(recurrent.data$tumor_label))
+# tumor_labs$lab <- factor(tumor_labs$lab, levels= levels(recurrent.data$tumor_label))
+# tumor.num.matrix2[2,"labs"] <- "'italic(n)[TCGA]==104\n'~'italic(n)[YG]==47'"
+lolli <-  lolli + geom_text(data = tumor.num.matrix2, aes(y=log10(2e4)-0.3,x=(nrow(tumor.num.matrix2)):1,label=total),parse = T,hjust=0,size=4)
+
+
+HPV.status <- as.data.frame(matrix(nrow=2,ncol=1,data=c("HPV^{'+'}","HPV^{'-'}")))
+lolli <-  lolli + geom_text(data = HPV.status, aes(y=log10(2e4)-.25,x=c(7,6),label=V1),parse = T,hjust=0,size=4.5)
+
+# lolli <- lolli + geom_point(data=data.to.push,aes(x=new_x,y=as.numeric(tumor_type)+0.1,size=Prop_tumors_with_specific_mut, fill=factor(col)),shape=21,alpha=0.8)+ scale_fill_manual(values = c("<1%" = "purple", "1–2%" = "blue", "2–3%" = "lightblue", "3–5%" = "green", "5–10%" = "orange", ">10%" = "red"))
+pvals <- list(expression(italic("P") <= 0.05), expression(italic("P") > 0.05))
+qvals <- list(expression(italic("Q") <= 0.1), expression(italic("Q") > 0.1))
+
+lolli <- lolli + geom_point(data=subset(data.to.push2, gamma_epistasis>log10(2e4)),aes(y=new_x,x=as.numeric(tumor_type)+0.15,size=Prop_tumors_with_specific_mut, fill=Qval_col),shape=21,alpha=0.8)+ scale_fill_manual(labels = qvals,values = c("red","black"),breaks=c("Q <= 0.1","Q > 0.1"))
+
+lolli <- lolli + geom_segment(data=subset(data.to.push2, gamma_epistasis>log10(2e4)),aes(y=gamma_epistasis,x=as.numeric(tumor_type)+0.02,yend=new_x,xend=as.numeric(tumor_type)+0.1),size=0.2,alpha=0.8)
+# lolli
+
+xlabels <- levels(recurrent.data2$tumor_type)
+xlabels[6] <- "HNSC"
+xlabels[7] <- "HNSC"
+# 
+# xlabels[3] <- "'ahhhh\nWe' ~are%=>% bold(here[123])"
+# xlabels[3] <- "'HNSC\nHPV' ~^{'+'}"
+
+lolli <- lolli + theme_bw() + 
+  coord_cartesian(xlim=c(1,nrow(tumor.num.matrix2)+0.5),ylim=c(log10(2e4),max(recurrent.data2$gamma_epistasis))) + 
+  scale_size_continuous(breaks = c(0.01,0.05,0.1,0.2,0.4,0.6)) + 
+  labs(size="Prevalence",color="Gene", fill=expression(paste(italic("Q")," value"))) + 
+  guides(size = guide_legend(reverse = TRUE)) + 
+  labs(x="Tumor type",y="Selection intensity") + 
+  scale_y_continuous(breaks=3:7, labels=expression(10^3, 10^4, 10^5,10^6,10^7)) +
+  scale_x_discrete(labels=parse(text=xlabels)) +
+  theme(panel.border = element_blank()) + 
+  theme(plot.margin = unit(c(t=1,r=1.1,b=1.5,l=1),units="cm")) + 
+  theme(axis.title.x = element_text(margin = margin(t = 0, r = 0, b = 0, l = 0),size=15),
+        axis.text.x = element_text(size=15,hjust=0,color="black"),axis.text.y = element_text(size=15,color="black"),axis.title.y=element_text(size=15)) +
+  theme(legend.position = c(0.15,0.70)) + 
+  theme(legend.background = element_rect(fill = 'grey95')) + theme(axis.title.x = element_text(vjust=-12))
+# theme(axis.title.y = element_text(margin = margin(t = 0, r = 20, b = 0, l = 0)))
+
+lolli_plot <- ggplot_gtable(ggplot_build(lolli))
+lolli_plot$layout$clip[lolli_plot$layout$name == "panel"] <- "off"
+library(grid)
+library(gridExtra)
+
+g <- arrangeGrob(lolli_plot)
+# grid.draw(g)
+ggsave(filename = "figures/reduced_selection_data_2e4_TtoB.png",width = 12,height = 12,dpi = 300,plot = g)
 
 
 
@@ -546,4 +913,16 @@ grid.arrange(gg1,gg.mid,gg2,ncol=3,widths=c(4.25/10,2/10,3.5/10))
 
 gg.combined.LUSC <- arrangeGrob(gg1,gg.mid,gg2,ncol=3,widths=c(5/10,3/10,5/10))
 ggsave(gg.combined.LUSC, filename = paste("figures/selection_tornado_plot_",tumor.name,".png",sep=""),units = "in",height=7,width = 10)
+
+
+# Loading in whole data set, then looking at trinucleotide mutations responsible for specific TP53 mutations. 
+
+# load("~/Documents/Selection_analysis/combined_selection_output_full_data.RData")
+
+head(combined_full_data)
+combined_full_data[which(combined_full_data$tumor_type=="LUSC" & combined_full_data$Gene=="TP53" & combined_full_data$Amino_acid_position==298),]
+
+combined_full_data[which(combined_full_data$tumor_type=="LUSC" & combined_full_data$Gene=="TP53" & combined_full_data$Amino_acid_position==158),]
+
+combined_full_data[which(combined_full_data$tumor_type=="LUSC" & combined_full_data$Gene=="TP53" & combined_full_data$Amino_acid_position==245 & combined_full_data$Amino_acid_alternative=="C"),]
 
