@@ -183,6 +183,7 @@ library(gridExtra)
 g <- arrangeGrob(lolli_plot)
 
 ggsave(filename = "figures/full_selection_data.pdf",plot = g,width = 15,height = 14)
+ggsave(filename = "figures/full_selection_data.png",plot = g,width = 15,height = 14)
 
 # ggsave(filename = "figures/full_selection_data_large.pdf",plot = g,width = 36,height = 24)
 

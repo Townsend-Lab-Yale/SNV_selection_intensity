@@ -42,6 +42,12 @@ UCEC.maf$tumor_type <- "UCEC"
 #First, merge LUAD to get rid of the extra columns. Merge along common headers 
 merged.df <- rbind(LUAD.maf[,intersect(colnames(LUAD.maf),colnames(UCEC.maf))],UCEC.maf[,intersect(colnames(LUAD.maf),colnames(UCEC.maf))])
 common.heads <- Reduce(intersect,list(names(merged.df),names(CESC.maf),names(LIHC.maf),names(LUSC.maf),names(PAAD.maf),names(SKCMP.maf),names(SKCMM.maf),names(THCA.maf)))
+
+#remove info not needed
+
+common.heads
+# common.heads <- common.heads[c(1,2,3,4,5,7,8,10,12,13,14,15,16,17,18)]
+
 merged.df <- rbind(merged.df[,common.heads],
                    CESC.maf[,common.heads],
                    LIHC.maf[,common.heads],
@@ -55,6 +61,15 @@ head(merged.df)
 tail(merged.df)
 length(unique(merged.df$tumor_type))
 merged.df <- merged.df[which(merged.df$Variant_Type=="SNP"),]
+
+# merged.df[which((merged.df$Patient_ID==merged.df$Tumor_Sample_Barcode)==F),]
+
+
+merged.df <- merged.df[,c(2,3,5,7,8,10,12,13,15,16,18)]
+
 length(unique(merged.df$tumor_type))
+
+
+
 
 write.table(x = merged.df,file = "output_data/YG_data_merged.txt",quote = F,row.names = F,sep="\t")

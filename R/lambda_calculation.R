@@ -24,7 +24,7 @@ golden_section <- function(f,a=0,b=(n.1/n.0)*2,n.1,n.0,tol=1e-30){
 
 
 lambda.calc <- function(n.one,n.zero){
-  
-  return(golden_section(f,a=0,b=(n.one/n.zero)*2,n.1=n.one,n.0=n.zero))
+  return(-log(n.zero/(n.one+n.zero))) # no need to use maximization if you solve it... 
+  # return(golden_section(f,a=0,b=(n.one/n.zero)*2,n.1=n.one,n.0=n.zero))
 }
 

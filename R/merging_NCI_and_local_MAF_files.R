@@ -60,6 +60,44 @@ merging_TCGA_and_local_MAFdata_function <- function(NCI_data,
   message("Important headers not in Local_data: ");print(important.headers[which(!(important.headers %in% colnames(Local_data)))])
   
   
+  
+  ### 
+  # Need to make sure that the local files do not contain duplicate tumors from TCGA 
+  ###
+  
+  message("Checking if any local tumor data is a duplicate of a TCGA tumor...")
+  message("Printing tumor pair with largest number of matches...")
+  
+  Local_data$mutation_name <- paste(Local_data$Hugo_Symbol,Local_data$Start_Position,Local_data$Tumor_Seq_Allele2,sep="")
+  NCI_data$mutation_name <- paste(NCI_data$Hugo_Symbol,NCI_data$Start_Position,NCI_data$Tumor_Seq_Allele2,sep="")
+  
+  percent_same <- matrix(data = NA,nrow=length(unique(Local_data$Tumor_Sample_Barcode)),ncol=3)
+  
+  rownames(percent_same) <- unique(Local_data$Tumor_Sample_Barcode)
+  colnames(percent_same) <- c("number_of_same_mutations","percent","TCGA_tumor")
+  
+  
+  for(local_tumor in 1:length(unique(Local_data$Tumor_Sample_Barcode))){
+    percent_for_each_tcga <- rep(NA,length=length(unique(NCI_data$Tumor_Sample_Barcode)))
+    names(percent_for_each_tcga) <- unique(NCI_data$Tumor_Sample_Barcode)
+    for(tcga_tumor in 1:length(unique(NCI_data$Tumor_Sample_Barcode))){
+      percent_for_each_tcga[tcga_tumor] <- length(which(Local_data$mutation_name[which(Local_data$Tumor_Sample_Barcode==unique(Local_data$Tumor_Sample_Barcode)[local_tumor])] %in% NCI_data$mutation_name[which(NCI_data$Tumor_Sample_Barcode==unique(NCI_data$Tumor_Sample_Barcode)[tcga_tumor])])) 
+      
+    }
+    
+    if(length(which(percent_for_each_tcga>0))>0){
+      percent_same[local_tumor,c("number_of_same_mutations","percent","TCGA_tumor")] <- c(percent_for_each_tcga[which.max(percent_for_each_tcga)],percent_for_each_tcga[which.max(percent_for_each_tcga)]/length(which(Local_data$Tumor_Sample_Barcode==unique(Local_data$Tumor_Sample_Barcode)[local_tumor])),names(percent_for_each_tcga)[which.max(percent_for_each_tcga)])
+    }
+    print(rownames(percent_same)[local_tumor])
+    print(percent_same[local_tumor,])
+  }
+  
+  if(length(which(percent_same[,"percent"]>.1))>0){
+    warning("Some of the local files share more than 10% of mutations with NCI files,
+            see `potential_duplicates.RData` in the working directory for more information.")
+    save(percent_same,file = "potential_duplicates.RData")
+  }
+  
   message("Merging the data frames along their common headers...")
   
   #What are the common headers among the data frames to be merged? 

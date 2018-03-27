@@ -34,9 +34,9 @@ The data for this pipeline needs to be in [MAF format](https://wiki.nci.nih.gov/
 
 ## Import the NCI data and any non-NCI data
 
-Obtain the NCI data from <https://portal.gdc.cancer.gov/> and store it within the `input_data/` folder. The `YG.data` dataset may be found along with Cannataro *et al.* (2017)[^1]
+Obtain the NCI data from <https://portal.gdc.cancer.gov/> and store it within the `input_data/` folder. The `YG.data` dataset may be found along with Cannataro *et al.* (2018)[^1]
 
-[^1]: Cannataro, V. L., Gaffney, S. G., Stender, C., Zhao, Z., Philips, M., Greenstein, A. E., Townsend, J. P. (2017) “Heterogeneity and mutation in KRAS and associated oncogenes: evaluating the potential for the evolution of resistance to targeting of KRAS G12C" Oncogene, in press
+[^1]: Cannataro, V. L., Gaffney, S. G., Stender, C., Zhao, Z., Philips, M., Greenstein, A. E., Townsend, J. P. (2018) “Heterogeneity and mutation in KRAS and associated oncogenes: evaluating the potential for the evolution of resistance to targeting of KRAS G12C" Oncogene, doi:10.1038/s41388-017-0105-z
 
 ```{r import the data}
 # import the LUAD data from NCI 
