@@ -5,8 +5,8 @@
 
 # Figure with all high effect size data ---- 
 
-load("~/Documents/Selection_analysis/combined_selection_output_withlargeSKCM.RData")
-
+# load("~/Documents/Selection_analysis/combined_selection_output_withlargeSKCM.RData")
+load("~/Documents/Selection_analysis/combined_selection_output.RData")
 supp.table.1 <- combined_all_data[which(combined_all_data$freq>1),]
 colnames(supp.table.1)[which(colnames(supp.table.1)=="gamma_epistasis")] <- "selection_intensity"
 supp.table.1 <- supp.table.1[,-which(colnames(supp.table.1)=="gamma")]

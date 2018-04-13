@@ -6,6 +6,23 @@ synonym.matcher.function <- function(input_to_be_changed,synonym.table,covariate
   }
   if(isoforms_or_MAF=="MAF"){
     this_MAF <- input_to_be_changed
+    
+    # NCI seems to favor KMT2*, while the covariates file has MLL* . switching these to 
+    # known synonyms 
+    
+    if(length(which(this_MAF$Hugo_Symbol=="KMT2D"))>0){
+      this_MAF$Hugo_Symbol[which(this_MAF$Hugo_Symbol=="KMT2D")] <- "MLL2"
+    }
+    if(length(which(this_MAF$Hugo_Symbol=="KMT2C"))>0){
+      this_MAF$Hugo_Symbol[which(this_MAF$Hugo_Symbol=="KMT2C")] <- "MLL3"
+    }
+    if(length(which(this_MAF$Hugo_Symbol=="KMT2B"))>0){
+      this_MAF$Hugo_Symbol[which(this_MAF$Hugo_Symbol=="KMT2B")] <- "MLL4"
+    }
+    if(length(which(this_MAF$Hugo_Symbol=="KMT2A"))>0){
+      this_MAF$Hugo_Symbol[which(this_MAF$Hugo_Symbol=="KMT2A")] <- "MLL"
+    }
+    
     synonyms_matrix <- synonym.table
     genes.to.investigate <- unique(this_MAF$Hugo_Symbol)
     genes.in.covariate <- covariates.file$gene

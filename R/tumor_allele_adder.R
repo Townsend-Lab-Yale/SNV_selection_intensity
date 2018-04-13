@@ -10,8 +10,13 @@ tumor.allele.adder <- function(MAF){
   MAF$Reference_Allele <- toupper(MAF$Reference_Allele)
   
   #Delete rows with no information in either Tumor Seq columns. 
-  if(length(which(MAF$Tumor_Seq_Allele1=="" & MAF$Tumor_Seq_Allele2=="")>0)){
+  if(length(which(MAF$Tumor_Seq_Allele1=="" & MAF$Tumor_Seq_Allele2==""))>0){
     MAF <- MAF[-which(MAF$Tumor_Seq_Allele1=="" & MAF$Tumor_Seq_Allele2==""),]
+  }
+  
+  #Delete rows with no information in either Tumor Seq columns. 
+  if(length(which(MAF$Tumor_Seq_Allele1=="NA" & MAF$Tumor_Seq_Allele2=="NA"))>0){
+    MAF <- MAF[-which(MAF$Tumor_Seq_Allele1=="NA" & MAF$Tumor_Seq_Allele2=="NA"),]
   }
   
   #Need to determine which column contains the tumor allele. 
