@@ -6,7 +6,7 @@ data.push.function <- function(data.to.push,
                                x.max,
                                touching.distance,
                                pushing.distance,
-                               gamma.min = 3,
+                               gamma.min = 1,
                                x.data = 'gamma_epistasis',
                                cat.data = 'tumor_type',
                                max.iter = 1e4){
@@ -64,6 +64,14 @@ data.push.function <- function(data.to.push,
               
             }
             
+          }
+          if(this.data[j] < x.min){
+            push.this.round <- T #a push occurred 
+            this.data[j] <- this.data[j] + pushing.distance 
+          }
+          if(this.data[j] > x.max){
+            push.this.round <- T #a push occurred 
+            this.data[j] <- this.data[j] - pushing.distance 
           }
           
         }
