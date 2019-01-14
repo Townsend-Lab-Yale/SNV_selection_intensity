@@ -9,9 +9,10 @@ data.push.function <- function(data.to.push,
                                gamma.min = 1,
                                x.data = 'gamma_epistasis',
                                cat.data = 'tumor_type',
+                               freq.data = 'Prop_tumors_with_specific_mut',
                                max.iter = 1e4){
   
-  data.to.push$new_x <- data.to.push$gamma_epistasis
+  data.to.push$new_x <- data.to.push[,x.data]
   data.to.push <- data.to.push[which(data.to.push[,colnames(data.to.push)[which(colnames(data.to.push)==x.data)]]>gamma.min),]
   # data.to.push <- subset(data.to.push, x.data>gamma.min)
   
@@ -89,19 +90,19 @@ data.push.function <- function(data.to.push,
   }
   data.to.push$col <- NA
   for(i in 1:nrow(data.to.push)){
-    if(data.to.push$Prop_tumors_with_specific_mut[i]<0.01){
+    if(data.to.push[i,freq.data]<0.01){
       data.to.push$col[i] <- "<1%"
     }else{
-      if(data.to.push$Prop_tumors_with_specific_mut[i]<0.02){
+      if(data.to.push[i,freq.data]<0.02){
         data.to.push$col[i] <- "1–2%"
       }else{
-        if(data.to.push$Prop_tumors_with_specific_mut[i]<0.03){
+        if(data.to.push[i,freq.data]<0.03){
           data.to.push$col[i] <- "2–3%"
         }else{
-          if(data.to.push$Prop_tumors_with_specific_mut[i]<0.05){
+          if(data.to.push[i,freq.data]<0.05){
             data.to.push$col[i] <- "3–5%"
           }else{
-            if(data.to.push$Prop_tumors_with_specific_mut[i]<0.1){
+            if(data.to.push[i,freq.data]<0.1){
               data.to.push$col[i] <- "5–10%"
             }else{
               data.to.push$col[i] <- ">10%"
